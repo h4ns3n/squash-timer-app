@@ -1,0 +1,27 @@
+.eflct-container {
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+.eflct-logo img {
+    max-width: 200px;
+    margin: 0 auto;
+}
+
+.eflct-fantasy {
+    /* If you want to style each letter differently, you can add custom CSS here */
+}
+
+.eflct-courts {
+    display: flex;
+    justify-content: space-around;
+}
+
+.eflct-court {
+    width: 22%;
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+/* Since font sizes and colors are set inline, no need to define them here */
