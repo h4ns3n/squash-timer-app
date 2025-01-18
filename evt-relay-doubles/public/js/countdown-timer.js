@@ -1,10 +1,10 @@
-jQuery(document).ready(function($){
+jQuery(document).ready(function ($) {
     // Parse initial values with default fallbacks
-    var totalMatches = parseInt($('#eflct-total-matches').val()) || 0;
-    var currentMatchIndex = parseInt($('#eflct-start-from-match').val()) || 1;
-    var startFromTime = parseInt($('#eflct-start-from-time').val()) || 0;
-    var matchDurations = eflct_match_durations;
-    var matchSchedule = eflct_match_schedule;
+    var totalMatches = parseInt($('#erd-total-matches').val()) || 0;
+    var currentMatchIndex = parseInt($('#erd-start-from-match').val()) || 1;
+    var startFromTime = parseInt($('#erd-start-from-time').val()) || 0;
+    var matchDurations = erd_match_durations;
+    var matchSchedule = erd_match_schedule;
 
     var phase = 'warmup'; // 'warmup' or 'match'
     var timeLeft;
@@ -14,12 +14,12 @@ jQuery(document).ready(function($){
     // Flag to ensure the warning sound plays only once per match
     var warningSoundPlayed = false;
 
-    var timerDisplay = $('#eflct-timer-display');
-    var matchNumberDisplay = $('#eflct-current-match-index');
+    var timerDisplay = $('#erd-timer-display');
+    var matchNumberDisplay = $('#erd-current-match-index');
 
     // Audio elements
-    var startSound = document.getElementById('eflct-start-sound');
-    var endSound = document.getElementById('eflct-end-sound');
+    var startSound = document.getElementById('erd-start-sound');
+    var endSound = document.getElementById('erd-end-sound');
 
     // Timer interval variable
     var countdownInterval;
@@ -36,7 +36,7 @@ jQuery(document).ready(function($){
         if (currentMatchIndex > totalMatches) {
             // All matches completed
             timerDisplay.text('00:00');
-            $('#eflct-match-details').html('<p>All matches are complete.</p>');
+            $('#erd-match-details').html('<p>All matches are complete.</p>');
             return;
         }
 
@@ -44,7 +44,7 @@ jQuery(document).ready(function($){
         if (!matchDurations[currentMatchIndex] || !matchSchedule[currentMatchIndex]) {
             console.error(`Missing data for match index ${currentMatchIndex}`);
             timerDisplay.text('00:00');
-            $('#eflct-match-details').html('<p>Error loading match details.</p>');
+            $('#erd-match-details').html('<p>Error loading match details.</p>');
             return;
         }
 
@@ -84,23 +84,23 @@ jQuery(document).ready(function($){
         var currentMatch = matchSchedule[currentMatchIndex];
         var html = '';
 
-        html += '<div class="eflct-courts">';
+        html += '<div class="erd-courts">';
         for (var court = 1; court <= 4; court++) {
             var courtInfo = currentMatch['court'][court] || {};
             var teamName = courtInfo['team_name'] || '';
             var playerDesc = courtInfo['player_desc'] || '';
             var playerName = courtInfo['player_name'] || '';
 
-            html += '<div class="eflct-court">';
-            html += '<h2 style="font-size: ' + (eflct_settings.font_sizes.court_label || '24') + 'px; color: ' + (eflct_settings.colors.court_label || '#000000') + ';">Court ' + court + '</h2>';
-            html += '<p class="eflct-team-name" style="font-size: ' + (eflct_settings.font_sizes.team_name || '18') + 'px; color: ' + (eflct_settings.colors.team_name || '#000000') + ';">' + teamName + '</p>';
-            html += '<p class="eflct-player-desc" style="font-size: ' + (eflct_settings.font_sizes.player_desc || '18') + 'px; color: ' + (eflct_settings.colors.player_desc || '#000000') + ';">' + playerDesc + '</p>';
-            html += '<p class="eflct-player-name" style="font-size: ' + (eflct_settings.font_sizes.player_name || '18') + 'px; color: ' + (eflct_settings.colors.player_name || '#000000') + ';">' + playerName + '</p>';
+            html += '<div class="erd-court">';
+            html += '<h2 style="font-size: ' + (erd_settings.font_sizes.court_label || '24') + 'px; color: ' + (erd_settings.colors.court_label || '#000000') + ';">Court ' + court + '</h2>';
+            html += '<p class="erd-team-name" style="font-size: ' + (erd_settings.font_sizes.team_name || '18') + 'px; color: ' + (erd_settings.colors.team_name || '#000000') + ';">' + teamName + '</p>';
+            html += '<p class="erd-player-desc" style="font-size: ' + (erd_settings.font_sizes.player_desc || '18') + 'px; color: ' + (erd_settings.colors.player_desc || '#000000') + ';">' + playerDesc + '</p>';
+            html += '<p class="erd-player-name" style="font-size: ' + (erd_settings.font_sizes.player_name || '18') + 'px; color: ' + (erd_settings.colors.player_name || '#000000') + ';">' + playerName + '</p>';
             html += '</div>';
         }
         html += '</div>';
 
-        $('#eflct-match-details').html(html);
+        $('#erd-match-details').html(html);
     }
 
     // Function to play a sound with error handling
@@ -108,7 +108,7 @@ jQuery(document).ready(function($){
         if (soundElement) {
             var playPromise = soundElement.play();
             if (playPromise !== undefined) {
-                playPromise.catch(function(error){
+                playPromise.catch(function (error) {
                     console.log(`${soundName} playback prevented:`, error);
                 });
             }
@@ -118,9 +118,9 @@ jQuery(document).ready(function($){
     // Function to start the timer
     function startTimer() {
         // Hide the start button and disable it to prevent multiple clicks
-        $('#eflct-start-button').hide().prop('disabled', true);
+        $('#erd-start-button').hide().prop('disabled', true);
 
-        countdownInterval = setInterval(function(){
+        countdownInterval = setInterval(function () {
             timeLeft--;
             timerDisplay.text(formatTime(timeLeft));
 
@@ -138,8 +138,6 @@ jQuery(document).ready(function($){
                     // Transition to match phase
                     phase = 'match';
                     timeLeft = matchDuration;
-
-                    // **Removed the startSound playback here to prevent playing at match start**
 
                     // Update the timer display for the new phase
                     timerDisplay.text(formatTime(timeLeft));
@@ -159,7 +157,7 @@ jQuery(document).ready(function($){
     }
 
     // Start Timer Button Click Event
-    $('#eflct-start-button').on('click', function(){
+    $('#erd-start-button').on('click', function () {
         initializeMatch();
     });
 });

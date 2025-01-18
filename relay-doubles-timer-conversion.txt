@@ -1,0 +1,123 @@
+
+evertsdal-fantasy-league-countdown-timer.php
+
+Sure, I'd be happy to explain what the selected PHP code is doing in plain English. This code is part of a WordPress plugin named "Evertsdal Fantasy League Countdown Timer". Here's a breakdown:
+
+1. **Plugin Information**: The initial comments provide metadata about the plugin, such as its name, description, version, author, license, and text domain.
+
+2. **Security Check**: The `if` statement checks if the file is being accessed directly. If it is, the script exits. This is a common security measure in WordPress plugins.
+
+3. **Constants Definition**: The `define` functions set up two constants for the plugin directory path (`EFLCT_PLUGIN_DIR`) and URL (`EFLCT_PLUGIN_URL`).
+
+4. **File Inclusions**: The `require_once` statements include necessary PHP files from the plugin's directory. These files likely contain additional functions and settings for the plugin.
+
+5. **Admin Settings**: If the user is an admin, the settings page for the plugin is included.
+
+6. **Enqueue Scripts and Styles**: The `eflct_enqueue_scripts` function is defined to enqueue (or add) the plugin's CSS and JavaScript files to the WordPress site. This function is hooked to the `wp_enqueue_scripts` action, which is a standard WordPress action for enqueuing scripts and styles.
+
+7. **Enqueue Admin Scripts and Styles**: The `eflct_admin_enqueue_scripts` function is defined to enqueue scripts and styles specifically for the admin settings page of the plugin. This function is hooked to the `admin_enqueue_scripts` action.
+
+8. **Shortcode Definition**: The `eflct_display_timer_shortcode` function is defined to display the countdown timer. This function is hooked to a shortcode, which means that the countdown timer can be displayed anywhere on the site by using the `[evertsdal_fantasy_league_timer]` shortcode.
+
+In summary, this plugin adds a countdown timer to a WordPress site, which can be displayed using a shortcode. The timer's scripts and styles are added to the site, and there are also admin settings for the plugin.
+
+
+/admin folder files
+
+The files in the `admin` folder are typically used for defining the administrative functionality of the plugin. In the context of the `evertsdal-fantasy-league-countdown-timer.php` file, these files are likely used to create and manage the settings and options for the countdown timer within the WordPress admin dashboard.
+
+1. `admin/admin.js`: This JavaScript file is likely used to handle any client-side logic for the admin settings page. This could include things like form validation, dynamic form fields, or other interactive elements on the settings page.
+
+2. `admin/settings-page.php`: This PHP file is responsible for creating the settings page in the WordPress admin dashboard. It defines the structure of the settings page, registers the settings, and handles the sanitization and saving of the settings. It also handles the uploading of CSV files for the match schedule and the clearing of the existing match schedule.
+
+The settings page includes options for uploading a logo, setting audio files, defining timer settings, starting the timer from a specific match and time, customizing the appearance of the timer, and managing the match schedule. The settings are stored in the `eflct_settings` option in the WordPress database.
+
+The file also includes a form for manually adding new matches to the schedule, and JavaScript code to handle the addition of new matches via AJAX.
+
+/includes directory helpers.php
+
+The `helpers.php` file in the `includes` directory of your plugin is typically used to define helper functions that can be used throughout the plugin. These functions often provide common functionality that is needed in multiple places, helping to keep your code DRY (Don't Repeat Yourself).
+
+In this specific `helpers.php` file, there is a single function defined: `eflct_get_settings()`. This function retrieves the settings for the Evertsdal Fantasy League Countdown Timer plugin from the WordPress database.
+
+Here's a breakdown of what the function does:
+
+1. `get_option( 'eflct_settings' )`: This is a WordPress function that retrieves the value of the specified option from the WordPress database. In this case, it's retrieving the value of the 'eflct_settings' option, which presumably contains the settings for the Evertsdal Fantasy League Countdown Timer plugin.
+
+2. The function then returns these settings.
+
+The purpose of this function is to provide a convenient way to retrieve the plugin's settings from anywhere in the plugin's code. Instead of having to use `get_option( 'eflct_settings' )` every time the settings are needed, you can simply use `eflct_get_settings()`. This makes the code cleaner and easier to read.
+
+
+/public/shortcode-output.php
+
+The `shortcode-output.php` file is responsible for generating the HTML that is displayed when the `[evertsdal_fantasy_league_timer]` shortcode is used in a WordPress post or page. This file is included in the `eflct_display_timer_shortcode()` function, which is registered as a shortcode in the main plugin file.
+
+Here's a breakdown of what this file does:
+
+1. **Fetch Settings**: It fetches the settings for the Evertsdal Fantasy League Countdown Timer plugin from the WordPress database using the `eflct_get_settings()` helper function.
+
+2. **Prepare Variables**: It prepares several variables based on these settings, including font sizes, colors, URLs for the logo and sound files, the match schedule, and timer settings.
+
+3. **Calculate Match Durations**: It calculates the duration of each match (both warmup and match time) based on whether it's a singles or doubles match.
+
+4. **Determine Starting Phase and Time Left**: It determines the starting phase (warmup or match) and the time left based on the 'start from' settings.
+
+5. **Generate HTML**: It generates the HTML for the countdown timer, including the logo or league title, the main timer display, the match number, a start timer button, match details, and audio elements for the start and end sounds.
+
+6. **Pass Data to JavaScript**: It passes several PHP variables to JavaScript using hidden inputs and a `<script>` tag. This data includes the total number of matches, the 'start from' match and time, the match durations, the match schedule, and the font sizes and colors. This data can then be used by the plugin's JavaScript code to control the countdown timer and update the display as needed.
+
+In summary, the `shortcode-output.php` file is responsible for generating the HTML for the countdown timer and passing the necessary data to JavaScript so that the timer can be controlled dynamically based on the plugin's settings.
+
+
+/public/match-details.php
+
+The `match-details.php` file is responsible for generating the HTML that displays the details of the current match in the Evertsdal Fantasy League Countdown Timer plugin. This file is included in the `shortcode-output.php` file, which means it's part of the output when the `[evertsdal_fantasy_league_timer]` shortcode is used.
+
+Here's a breakdown of what this file does:
+
+1. **Fetch Current Match**: It fetches the current match from the match schedule array. If the current match is not set or is null, it displays a message saying "No match schedule available" and exits.
+
+2. **Generate HTML for Each Court**: It then loops through each court (from 1 to 4) and generates the HTML for that court. For each court, it fetches the team name, player description, and player name from the court info array. If these values are not set, they default to an empty string.
+
+3. **Display Court Details**: For each court, it displays the court number, team name, player description, and player name. The font size and color for each of these elements are fetched from the settings and applied inline. If the font size or color is not set in the settings, it defaults to '24px' for the court label font size, '18px' for the team name, player description, and player name font sizes, and '#000000' for all colors.
+
+In summary, the `match-details.php` file is responsible for generating the HTML that displays the details of the current match, including the team name, player description, and player name for each court. The appearance of these elements can be customized via the plugin's settings.
+
+
+/public/js/countdown-timer.js
+
+The `countdown-timer.js` file is responsible for managing the countdown timer's functionality on the client side. Here's a breakdown of what this file does:
+
+1. **Parse Initial Values**: It parses initial values from the HTML elements and global JavaScript variables. These values include the total number of matches, the current match index, the start time, the match durations, and the match schedule.
+
+2. **Initialize Variables**: It initializes several variables that will be used to manage the countdown timer, including the current phase (warmup or match), the time left, the duration of the warmup and match phases, and a flag to ensure the warning sound only plays once per match.
+
+3. **Initialize Audio Elements**: It initializes the audio elements for the start and end sounds.
+
+4. **Define Helper Functions**: It defines several helper functions, including a function to format time as MM:SS, a function to initialize match settings, a function to update match details, a function to play a sound with error handling, and a function to start the timer.
+
+5. **Start Timer**: It starts the timer when the document is ready.
+
+In summary, the `countdown-timer.js` file is responsible for managing the countdown timer's functionality, including initializing the match settings, updating the timer display, transitioning between the warmup and match phases, playing sounds at the start and end of each match, and handling errors.
+
+
+/public/css/countdown-timer.css
+
+The `countdown-timer.css` file is a Cascading Style Sheet (CSS) file that is used to style the elements of the Evertsdal Fantasy League Countdown Timer plugin. CSS is a language used for describing the look and formatting of a document written in HTML.
+
+Here's a breakdown of what this file does:
+
+1. **.eflct-container**: This class is likely applied to the main container of the countdown timer. The styles applied here center the text and set the font to Arial or a generic sans-serif font if Arial is not available.
+
+2. **.eflct-logo img**: This class targets the image within the element with the `eflct-logo` class. The styles applied here set a maximum width for the logo and center it within its container.
+
+3. **.eflct-fantasy**: This class is likely applied to the element containing the word "FANTASY" in the league title. The comment suggests that you can add custom CSS here if you want to style each letter differently.
+
+4. **.eflct-courts**: This class is likely applied to the container of the courts. The styles applied here display the courts in a row and space them evenly along the horizontal axis.
+
+5. **.eflct-court**: This class is likely applied to each individual court. The styles applied here set a width for the court, add a border, add padding, and set the box-sizing property to border-box, which means the padding and border are included in the element's total width and height.
+
+In summary, the `countdown-timer.css` file is responsible for styling the countdown timer, including the main container, the logo, the league title, the courts container, and each individual court.
+
+

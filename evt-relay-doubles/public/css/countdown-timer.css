@@ -1,23 +1,23 @@
-.eflct-container {
+.erd-container {
     text-align: center;
     font-family: Arial, sans-serif;
 }
 
-.eflct-logo img {
+.erd-logo img {
     max-width: 200px;
     margin: 0 auto;
 }
 
-.eflct-fantasy {
+.erd-fantasy {
     /* If you want to style each letter differently, you can add custom CSS here */
 }
 
-.eflct-courts {
+.erd-courts {
     display: flex;
     justify-content: space-around;
 }
 
-.eflct-court {
+.erd-court {
     width: 22%;
     border: 1px solid #ccc;
     padding: 10px;

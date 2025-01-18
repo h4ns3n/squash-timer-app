@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Get plugin settings.
-function eflct_get_settings() {
-    $settings = get_option( 'eflct_settings' );
+function erd_get_settings_v2() {
+    $settings = get_option( 'erd_settings' );
     return $settings;
 }

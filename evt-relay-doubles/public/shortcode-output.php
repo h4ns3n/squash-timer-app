@@ -3,7 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-$settings = eflct_get_settings();
+$settings = erd_get_settings_v2();
 
 // Get settings values.
 $font_sizes = isset( $settings['font_sizes'] ) ? $settings['font_sizes'] : array();
@@ -65,51 +65,51 @@ if ( $start_from_time <= $warmup_duration ) {
     }
 }
 ?>
-<div class="eflct-container">
+<div class="erd-container">
     <?php if ( $logo_url ) : ?>
-        <div class="eflct-logo">
+        <div class="erd-logo">
             <img src="<?php echo esc_url( $logo_url ); ?>" alt="League Logo" />
         </div>
     <?php else : ?>
-        <h1 class="eflct-league-title" style="font-size: <?php echo isset( $font_sizes['league_title'] ) ? esc_attr( $font_sizes['league_title'] ) . 'px' : '48px'; ?>; color: <?php echo isset( $colors['league_title'] ) ? esc_attr( $colors['league_title'] ) : '#000000'; ?>;">
-            EVERTSDAL <span class="eflct-fantasy">RELAY DOUBLES</span> LEAGUE
+        <h1 class="erd-league-title" style="font-size: <?php echo isset( $font_sizes['league_title'] ) ? esc_attr( $font_sizes['league_title'] ) . 'px' : '48px'; ?>; color: <?php echo isset( $colors['league_title'] ) ? esc_attr( $colors['league_title'] ) : '#000000'; ?>;">
+            EVERTSDAL <span class="erd-fantasy">RELAY DOUBLES</span> LEAGUE
         </h1>
     <?php endif; ?>
 
-    <div class="eflct-main-timer" style="font-size: <?php echo isset( $font_sizes['timer'] ) ? esc_attr( $font_sizes['timer'] ) . 'px' : '72px'; ?>; color: <?php echo isset( $colors['timer'] ) ? esc_attr( $colors['timer'] ) : '#000000'; ?>;">
-        <span id="eflct-timer-display">00:00</span>
+    <div class="erd-main-timer" style="font-size: <?php echo isset( $font_sizes['timer'] ) ? esc_attr( $font_sizes['timer'] ) . 'px' : '72px'; ?>; color: <?php echo isset( $colors['timer'] ) ? esc_attr( $colors['timer'] ) : '#000000'; ?>;">
+        <span id="erd-timer-display">00:00</span>
     </div>
 
-    <div class="eflct-match-number" style="font-size: <?php echo isset( $font_sizes['match_number'] ) ? esc_attr( $font_sizes['match_number'] ) . 'px' : '24px'; ?>; color: <?php echo isset( $colors['match_number'] ) ? esc_attr( $colors['match_number'] ) : '#000000'; ?>;">
-        Match <span id="eflct-current-match-index"><?php echo $current_match_index; ?></span>
+    <div class="erd-match-number" style="font-size: <?php echo isset( $font_sizes['match_number'] ) ? esc_attr( $font_sizes['match_number'] ) . 'px' : '24px'; ?>; color: <?php echo isset( $colors['match_number'] ) ? esc_attr( $colors['match_number'] ) : '#000000'; ?>;">
+        Match <span id="erd-current-match-index"><?php echo $current_match_index; ?></span>
     </div>
 
     <!-- Start Timer Button -->
-    <button id="eflct-start-button" style="font-size: 24px; padding: 10px 20px; margin-top: 20px;">Start Timer</button>
+    <button id="erd-start-button" style="font-size: 24px; padding: 10px 20px; margin-top: 20px;">Start Timer</button>
 
-    <div id="eflct-match-details">
+    <div id="erd-match-details">
         <?php include 'match-details.php'; ?>
     </div>
 
     <!-- Audio Elements -->
     <?php if ( $start_sound_url ) : ?>
-        <audio id="eflct-start-sound" src="<?php echo esc_url( $start_sound_url ); ?>"></audio>
+        <audio id="erd-start-sound" src="<?php echo esc_url( $start_sound_url ); ?>"></audio>
     <?php endif; ?>
     <?php if ( $end_sound_url ) : ?>
-        <audio id="eflct-end-sound" src="<?php echo esc_url( $end_sound_url ); ?>"></audio>
+        <audio id="erd-end-sound" src="<?php echo esc_url( $end_sound_url ); ?>"></audio>
     <?php endif; ?>
 </div>
 
 <!-- Hidden inputs to pass data to JavaScript -->
-<input type="hidden" id="eflct-total-matches" value="<?php echo esc_attr( $total_matches ); ?>" />
-<input type="hidden" id="eflct-start-from-match" value="<?php echo esc_attr( $start_from_match ); ?>" />
-<input type="hidden" id="eflct-start-from-time" value="<?php echo esc_attr( $start_from_time ); ?>" />
+<input type="hidden" id="erd-total-matches" value="<?php echo esc_attr( $total_matches ); ?>" />
+<input type="hidden" id="erd-start-from-match" value="<?php echo esc_attr( $start_from_match ); ?>" />
+<input type="hidden" id="erd-start-from-time" value="<?php echo esc_attr( $start_from_time ); ?>" />
 
 <!-- Pass PHP variables to JavaScript -->
 <script>
-var eflct_match_durations = <?php echo json_encode( $match_durations ); ?>;
-var eflct_match_schedule = <?php echo json_encode( $match_schedule ); ?>;
-var eflct_settings = <?php echo json_encode( array(
+var erd_match_durations = <?php echo json_encode( $match_durations ); ?>;
+var erd_match_schedule = <?php echo json_encode( $match_schedule ); ?>;
+var erd_settings = <?php echo json_encode( array(
     'font_sizes' => $font_sizes,
     'colors'     => $colors,
 ) ); ?>;

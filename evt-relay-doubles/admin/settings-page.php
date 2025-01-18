@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Adds the settings page to the WordPress admin menu.
  */
-function eflct_add_settings_page() {
+function eflct_add_settings_pageV2() {
     add_options_page(
         __( 'Evertsdal Relay Doubles Timer Settings', 'eflct-textdomain' ), // Page title
         __( 'Relay Doubles Countdown Timer', 'eflct-textdomain' ),                      // Menu title
@@ -15,12 +15,12 @@ function eflct_add_settings_page() {
         'eflct_render_settings_page'                                            // Callback function
     );
 }
-add_action( 'admin_menu', 'eflct_add_settings_page' );
+add_action( 'admin_menuV2', 'eflct_add_settings_page' );
 
 /**
  * Registers the plugin settings.
  */
-function eflct_register_settings() {
+function eflct_register_settingsV2() {
     register_setting(
         'eflct_settings_group', // Option group
         'eflct_settings',      // Option name
@@ -30,7 +30,7 @@ function eflct_register_settings() {
     // Add settings sections and fields if needed in the future
     // Currently, fields are handled manually in the settings page
 }
-add_action( 'admin_init', 'eflct_register_settings' );
+add_action( 'admin_initV2', 'eflct_register_settings' );
 
 /**
  * Sanitizes and validates the plugin settings.
@@ -38,7 +38,7 @@ add_action( 'admin_init', 'eflct_register_settings' );
  * @param array $input The input array from the settings form.
  * @return array The sanitized settings array.
  */
-function eflct_sanitize_settings( $input ) {
+function eflct_sanitize_settingsV2( $input ) {
     // Initialize the sanitized array.
     $sanitized = array();
 
@@ -115,7 +115,7 @@ function eflct_sanitize_settings( $input ) {
  * @param array  $allowed_mime_types Allowed MIME types (e.g., array('jpg|jpeg|png|gif')).
  * @return int|string The new attachment ID or existing ID if no upload occurs.
  */
-function eflct_handle_file_upload( $file_input_name, $existing_attachment_id, $allowed_mime_types = array() ) {
+function eflct_handle_file_uploadV2( $file_input_name, $existing_attachment_id, $allowed_mime_types = array() ) {
     // Check for deletion.
     if ( isset( $_POST[ $file_input_name . '_delete' ] ) && $_POST[ $file_input_name . '_delete' ] === '1' ) {
         if ( $existing_attachment_id ) {
@@ -193,7 +193,7 @@ function eflct_handle_file_upload( $file_input_name, $existing_attachment_id, $a
 /**
  * Handles the CSV file upload to populate the match schedule.
  */
-function eflct_handle_csv_upload() {
+function eflct_handle_csv_uploadV2() {
     // Verify user capability.
     if ( ! current_user_can( 'manage_options' ) ) {
         wp_die( __( 'Unauthorized user', 'eflct-textdomain' ) );
@@ -334,12 +334,12 @@ function eflct_handle_csv_upload() {
     wp_redirect( add_query_arg( 'settings-updated', 'true', admin_url( 'options-general.php?page=eflct-settings' ) ) );
     exit;
 }
-add_action( 'admin_post_eflct_upload_csv', 'eflct_handle_csv_upload' );
+add_action( 'admin_post_eflct_upload_csvV2', 'eflct_handle_csv_upload' );
 
 /**
  * Handles clearing the existing match schedule.
  */
-function eflct_handle_clear_schedule() {
+function eflct_handle_clear_scheduleV2() {
     // Verify user capability.
     if ( ! current_user_can( 'manage_options' ) ) {
         wp_die( __( 'Unauthorized user', 'eflct-textdomain' ) );
@@ -369,12 +369,12 @@ function eflct_handle_clear_schedule() {
     wp_redirect( add_query_arg( 'settings-updated', 'true', admin_url( 'options-general.php?page=eflct-settings' ) ) );
     exit;
 }
-add_action( 'admin_post_eflct_clear_schedule', 'eflct_handle_clear_schedule' );
+add_action( 'admin_post_eflct_clear_scheduleV2', 'eflct_handle_clear_schedule' );
 
 /**
  * Renders the settings page in the WordPress admin.
  */
-function eflct_render_settings_page() {
+function eflct_render_settings_pageV2() {
     // Display settings errors (for success or error messages).
     settings_errors( 'eflct_settings' );
 
