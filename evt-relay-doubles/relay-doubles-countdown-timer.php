@@ -1,11 +1,11 @@
 <?php
 /*
-Plugin Name: Evertsdal Fantasy League Countdown Timer
-Description: Displays a countdown timer for the Evertsdal Fantasy League squash matches.
-Version: 1.5
-Author: Your Name
+Plugin Name: Relay Doubles Countdown Timer
+Description: Displays a countdown timer for the Evertsdal Relay squash matches.
+Version: 1.0
+Author: Paul Hansen
 License: GPL2
-Text Domain: evertsdal-fantasy-league
+Text Domain: evertsdal-relay-doubles-league
 */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -69,4 +69,4 @@ function eflct_display_timer_shortcode() {
 
     return ob_get_clean();
 }
-add_shortcode( 'evertsdal_fantasy_league_timer', 'eflct_display_timer_shortcode' );
+add_shortcode( 'relay_doubles_league_timer', 'eflct_display_timer_shortcode' );

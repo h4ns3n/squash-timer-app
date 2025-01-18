@@ -8,8 +8,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function eflct_add_settings_page() {
     add_options_page(
-        __( 'Evertsdal Fantasy League Timer Settings', 'eflct-textdomain' ), // Page title
-        __( 'EFL Countdown Timer', 'eflct-textdomain' ),                      // Menu title
+        __( 'Evertsdal Relay Doubles Timer Settings', 'eflct-textdomain' ), // Page title
+        __( 'Relay Doubles Countdown Timer', 'eflct-textdomain' ),                      // Menu title
         'manage_options',                                                       // Capability
         'eflct-settings',                                                       // Menu slug
         'eflct_render_settings_page'                                            // Callback function

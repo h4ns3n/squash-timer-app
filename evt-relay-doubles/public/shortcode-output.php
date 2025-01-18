@@ -72,7 +72,7 @@ if ( $start_from_time <= $warmup_duration ) {
         </div>
     <?php else : ?>
         <h1 class="eflct-league-title" style="font-size: <?php echo isset( $font_sizes['league_title'] ) ? esc_attr( $font_sizes['league_title'] ) . 'px' : '48px'; ?>; color: <?php echo isset( $colors['league_title'] ) ? esc_attr( $colors['league_title'] ) : '#000000'; ?>;">
-            EVERTSDAL <span class="eflct-fantasy">FANTASY</span> LEAGUE
+            EVERTSDAL <span class="eflct-fantasy">RELAY DOUBLES</span> LEAGUE
         </h1>
     <?php endif; ?>
 
