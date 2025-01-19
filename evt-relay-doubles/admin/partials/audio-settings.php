@@ -9,59 +9,159 @@ if (!defined('ABSPATH')) {
  * @param array $settings The current plugin settings.
  */
 function erd_render_audio_settings($settings) {
+    // Ensure WordPress media scripts are loaded
+    wp_enqueue_media();
     ?>
     <h2><?php esc_html_e('Audio Settings', 'erdct-textdomain'); ?></h2>
-    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data">
-        <input type="hidden" name="action" value="erdct_upload_audio" />
-        <?php wp_nonce_field('erdct_upload_audio_nonce', 'erdct_upload_audio_nonce_field'); ?>
+    <table class="form-table">
+        <!-- Start Sound -->
+        <tr valign="top">
+            <th scope="row"><?php esc_html_e('Start Sound (MP3)', 'erdct-textdomain'); ?></th>
+            <td>
+                <div class="erd-audio-upload-container">
+                    <input type="hidden"
+                           name="erd_settings[start_sound_id]"
+                           id="erd-start-sound-id"
+                           value="<?php echo esc_attr($settings['start_sound_id'] ?? ''); ?>" />
 
-        <table class="form-table">
-            <!-- Start Sound -->
-            <tr valign="top">
-                <th scope="row"><?php esc_html_e('Start Sound', 'erdct-textdomain'); ?></th>
-                <td>
-                    <input type="file" name="erdct_start_sound" accept="audio/*" />
-                    <?php if (!empty($settings['start_sound'])): ?>
-                        <div class="audio-preview">
-                            <audio controls>
-                                <source src="<?php echo esc_url(wp_get_attachment_url($settings['start_sound'])); ?>" type="audio/mpeg">
-                            </audio>
-                        </div>
-                    <?php endif; ?>
-                </td>
-            </tr>
+                    <button type="button"
+                            class="button"
+                            id="erd-upload-start-sound">
+                        <?php esc_html_e('Choose Start Sound', 'erdct-textdomain'); ?>
+                    </button>
 
-            <!-- End Sound -->
-            <tr valign="top">
-                <th scope="row"><?php esc_html_e('End Sound', 'erdct-textdomain'); ?></th>
-                <td>
-                    <input type="file" name="erdct_end_sound" accept="audio/*" />
-                    <?php if (!empty($settings['end_sound'])): ?>
-                        <div class="audio-preview">
-                            <audio controls>
-                                <source src="<?php echo esc_url(wp_get_attachment_url($settings['end_sound'])); ?>" type="audio/mpeg">
-                            </audio>
-                        </div>
-                    <?php endif; ?>
-                </td>
-            </tr>
+                    <div id="erd-start-sound-preview" style="margin-top: 10px;">
+                        <?php if (!empty($settings['start_sound_id'])):
+                            $audio_url = wp_get_attachment_url($settings['start_sound_id']);
+                            if ($audio_url): ?>
+                                <div class="audio-preview">
+                                    <audio controls>
+                                        <source src="<?php echo esc_url($audio_url); ?>" type="audio/mpeg">
+                                    </audio>
+                                    <br>
+                                    <button type="button"
+                                            class="button erd-remove-sound"
+                                            data-target="start">
+                                        <?php esc_html_e('Remove Sound', 'erdct-textdomain'); ?>
+                                    </button>
+                                </div>
+                            <?php endif;
+                        endif; ?>
+                    </div>
+                </div>
+            </td>
+        </tr>
 
-            <!-- Volume -->
-            <tr valign="top">
-                <th scope="row"><?php esc_html_e('Sound Volume', 'erdct-textdomain'); ?></th>
-                <td>
-                    <input type="range"
-                           class="erd-volume-slider"
-                           name="erd_settings[volume]"
-                           min="0"
-                           max="100"
-                           value="<?php echo esc_attr(isset($settings['volume']) ? $settings['volume'] : '100'); ?>">
-                    <span class="erd-volume-value"><?php echo esc_html(isset($settings['volume']) ? $settings['volume'] : '100'); ?>%</span>
-                </td>
-            </tr>
-        </table>
+        <!-- End Sound -->
+        <tr valign="top">
+            <th scope="row"><?php esc_html_e('End Sound (MP3)', 'erdct-textdomain'); ?></th>
+            <td>
+                <div class="erd-audio-upload-container">
+                    <input type="hidden"
+                           name="erd_settings[end_sound_id]"
+                           id="erd-end-sound-id"
+                           value="<?php echo esc_attr($settings['end_sound_id'] ?? ''); ?>" />
 
-        <?php submit_button(__('Save Audio Settings', 'erdct-textdomain')); ?>
-    </form>
+                    <button type="button"
+                            class="button"
+                            id="erd-upload-end-sound">
+                        <?php esc_html_e('Choose End Sound', 'erdct-textdomain'); ?>
+                    </button>
+
+                    <div id="erd-end-sound-preview" style="margin-top: 10px;">
+                        <?php if (!empty($settings['end_sound_id'])):
+                            $audio_url = wp_get_attachment_url($settings['end_sound_id']);
+                            if ($audio_url): ?>
+                                <div class="audio-preview">
+                                    <audio controls>
+                                        <source src="<?php echo esc_url($audio_url); ?>" type="audio/mpeg">
+                                    </audio>
+                                    <br>
+                                    <button type="button"
+                                            class="button erd-remove-sound"
+                                            data-target="end">
+                                        <?php esc_html_e('Remove Sound', 'erdct-textdomain'); ?>
+                                    </button>
+                                </div>
+                            <?php endif;
+                        endif; ?>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <script type="text/javascript">
+    jQuery(document).ready(function($) {
+        function createMediaUploader(title, buttonText) {
+            return wp.media({
+                title: title,
+                button: {
+                    text: buttonText
+                },
+                multiple: false,
+                library: {
+                    type: 'audio'
+                }
+            });
+        }
+
+        function handleAudioSelect(type) {
+            var mediaUploader = createMediaUploader(
+                '<?php esc_html_e('Choose Audio File', 'erdct-textdomain'); ?>',
+                '<?php esc_html_e('Select', 'erdct-textdomain'); ?>'
+            );
+
+            mediaUploader.on('select', function() {
+                var attachment = mediaUploader.state().get('selection').first().toJSON();
+
+                // Update hidden input
+                $('#erd-' + type + '-sound-id').val(attachment.id);
+
+                // Update preview
+                var audioPreview = '<div class="audio-preview">' +
+                    '<audio controls>' +
+                    '<source src="' + attachment.url + '" type="audio/mpeg">' +
+                    '</audio><br>' +
+                    '<button type="button" class="button erd-remove-sound" data-target="' + type + '">' +
+                    '<?php esc_html_e('Remove Sound', 'erdct-textdomain'); ?>' +
+                    '</button></div>';
+
+                $('#erd-' + type + '-sound-preview').html(audioPreview);
+            });
+
+            return mediaUploader;
+        }
+
+        // Start Sound Upload
+        var startSoundUploader;
+        $('#erd-upload-start-sound').on('click', function(e) {
+            e.preventDefault();
+            if (!startSoundUploader) {
+                startSoundUploader = handleAudioSelect('start');
+            }
+            startSoundUploader.open();
+        });
+
+        // End Sound Upload
+        var endSoundUploader;
+        $('#erd-upload-end-sound').on('click', function(e) {
+            e.preventDefault();
+            if (!endSoundUploader) {
+                endSoundUploader = handleAudioSelect('end');
+            }
+            endSoundUploader.open();
+        });
+
+        // Handle remove button clicks
+        $(document).on('click', '.erd-remove-sound', function() {
+            var target = $(this).data('target');
+            if (confirm('<?php esc_html_e('Are you sure you want to remove this sound?', 'erdct-textdomain'); ?>')) {
+                $('#erd-' + target + '-sound-id').val('');
+                $('#erd-' + target + '-sound-preview').empty();
+            }
+        });
+    });
+    </script>
     <?php
 }

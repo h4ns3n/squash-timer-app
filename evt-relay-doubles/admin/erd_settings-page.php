@@ -3,6 +3,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly.
 }
 
+include_once 'partials/audio-settings.php';
+
 function erd_render_settings_page() {
     ?>
     <div class="wrap">
@@ -14,9 +16,13 @@ function erd_render_settings_page() {
             <?php esc_html_e('The start time is set if Start Time (minutes) or Start Time (seconds) is set to any value other than 0 or null.', 'erdct-textdomain'); ?>
         </div>
 
-        <form method="post" action="options.php">
+        <form method="post"
+              action="options.php"
+              enctype="multipart/form-data"
+              id="erd-settings-form">
             <?php
             settings_fields('erd_settings_group');
+            do_settings_sections('erd_settings_group');
             $settings = get_option('erd_settings', array());
             ?>
 
@@ -92,6 +98,8 @@ function erd_render_settings_page() {
                     </td>
                 </tr>
             </table>
+
+            <?php erd_render_audio_settings($settings); ?>
 
             <?php submit_button(); ?>
         </form>
