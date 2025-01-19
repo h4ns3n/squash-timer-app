@@ -3,6 +3,8 @@ jQuery(document).ready(function ($) {
     var warmupTime = erdTimerSettings.warmupTime * 60; // Convert to seconds
     var matchTime = erdTimerSettings.matchTime * 60; // Convert to seconds
     var breakTime = erdTimerSettings.breakTime * 60; // Convert to seconds
+    var audioUrl = erdTimerSettings.audioUrl;
+    var audio = new Audio(audioUrl);
 
     var startTimeMinutes = erdTimerSettings.startTimeMinutes || 0;
     var startTimeSeconds = erdTimerSettings.startTimeSeconds || 0;
@@ -34,6 +36,9 @@ jQuery(document).ready(function ($) {
             if (timeLeft > 0) {
                 timeLeft--;
                 updateTimerDisplay();
+                if (timeLeft === audio.duration) {
+                    audio.play();
+                }
             } else {
                 clearInterval(timerInterval);
                 switchPhase();
