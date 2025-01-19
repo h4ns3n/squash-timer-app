@@ -25,3 +25,19 @@
 }
 
 /* Since font sizes and colors are set inline, no need to define them here */
+
+#erd-timer-display {
+    font-size: var(--timer-font-size, 20pt);
+    text-align: center;
+    margin: 20px 0;
+}
+
+#erd-start-button {
+    display: block;
+    margin: 0 auto;
+}
+
+#erd-current-match-index,
+#erd-match-details {
+    text-align: center;
+}
