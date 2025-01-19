@@ -7,6 +7,13 @@ function erd_render_settings_page() {
     ?>
     <div class="wrap">
         <h1><?php esc_html_e('Relay Doubles Timer Settings', 'erdct-textdomain'); ?></h1>
+
+        <!-- Warning Banner -->
+        <div style="background-color: #ffcc00; padding: 10px; margin-bottom: 20px;">
+            <strong><?php esc_html_e('Warning:', 'erdct-textdomain'); ?></strong>
+            <?php esc_html_e('The start time is set if Start Time (minutes) or Start Time (seconds) is set to any value other than 0 or null.', 'erdct-textdomain'); ?>
+        </div>
+
         <form method="post" action="options.php">
             <?php
             settings_fields('erd_settings_group');
@@ -45,18 +52,6 @@ function erd_render_settings_page() {
                         <input type="number" name="erd_settings[label_timer_gap]" value="<?php echo esc_attr($settings['label_timer_gap'] ?? 10); ?>" min="-50" max="50" />
                     </td>
                 </tr>
-                <tr valign="top">
-                    <th scope="row"><?php esc_html_e('Start Time (minutes)', 'erdct-textdomain'); ?></th>
-                    <td>
-                        <input type="number" name="erd_settings[start_time_minutes]" value="<?php echo esc_attr($settings['start_time_minutes'] ?? 0); ?>" min="0" max="120" />
-                    </td>
-                </tr>
-                <tr valign="top">
-                    <th scope="row"><?php esc_html_e('Start Time (seconds)', 'erdct-textdomain'); ?></th>
-                    <td>
-                        <input type="number" name="erd_settings[start_time_seconds]" value="<?php echo esc_attr($settings['start_time_seconds'] ?? 0); ?>" min="0" max="59" />
-                    </td>
-                </tr>
             </table>
 
             <h2><?php esc_html_e('Timer Settings', 'erdct-textdomain'); ?></h2>
@@ -77,6 +72,23 @@ function erd_render_settings_page() {
                     <th scope="row"><?php esc_html_e('Break Time (minutes)', 'erdct-textdomain'); ?></th>
                     <td>
                         <input type="number" name="erd_settings[break_time]" value="<?php echo esc_attr($settings['break_time'] ?? 5); ?>" min="1" max="60" />
+                    </td>
+                </tr>
+            </table>
+
+            <h2><?php esc_html_e('Emergency Timer Restart', 'erdct-textdomain'); ?></h2>
+            <p><?php esc_html_e('Set the start time in minutes and seconds to resume the timer from a specific point in case of disruption.', 'erdct-textdomain'); ?></p>
+            <table class="form-table">
+                <tr valign="top">
+                    <th scope="row"><?php esc_html_e('Start Time (minutes)', 'erdct-textdomain'); ?></th>
+                    <td>
+                        <input type="number" name="erd_settings[start_time_minutes]" value="<?php echo esc_attr($settings['start_time_minutes'] ?? 0); ?>" min="0" max="120" />
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row"><?php esc_html_e('Start Time (seconds)', 'erdct-textdomain'); ?></th>
+                    <td>
+                        <input type="number" name="erd_settings[start_time_seconds]" value="<?php echo esc_attr($settings['start_time_seconds'] ?? 0); ?>" min="0" max="59" />
                     </td>
                 </tr>
             </table>

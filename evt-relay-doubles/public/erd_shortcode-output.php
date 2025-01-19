@@ -27,7 +27,9 @@ $settings = get_option('erd_settings', array());
     var erdTimerSettings = {
         warmupTime: <?php echo esc_js($settings['warmup_time'] ?? 5); ?>,
         matchTime: <?php echo esc_js($settings['match_time'] ?? 85); ?>,
-        breakTime: <?php echo esc_js($settings['break_time'] ?? 5); ?>
+        breakTime: <?php echo esc_js($settings['break_time'] ?? 5); ?>,
+        startTimeMinutes: <?php echo esc_js($settings['start_time_minutes'] ?? 0); ?>,
+        startTimeSeconds: <?php echo esc_js($settings['start_time_seconds'] ?? 0); ?>
     };
 </script>
 
