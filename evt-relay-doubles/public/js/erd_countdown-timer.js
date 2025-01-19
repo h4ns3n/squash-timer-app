@@ -4,8 +4,12 @@ jQuery(document).ready(function ($) {
     var matchTime = erdTimerSettings.matchTime * 60; // Convert to seconds
     var breakTime = erdTimerSettings.breakTime * 60; // Convert to seconds
 
-    var currentPhase = 'warmup'; // Possible values: 'warmup', 'match', 'break'
-    var timeLeft = warmupTime;
+    var startTimeMinutes = erdTimerSettings.startTimeMinutes || 0;
+    var startTimeSeconds = erdTimerSettings.startTimeSeconds || 0;
+    var startTime = (startTimeMinutes * 60) + startTimeSeconds;
+
+    var currentPhase = startTime > 0 ? 'match' : 'warmup';
+    var timeLeft = startTime > 0 ? startTime : warmupTime;
 
     function updateTimerDisplay() {
         var minutes = Math.floor(timeLeft / 60);
