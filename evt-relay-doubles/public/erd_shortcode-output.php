@@ -4,6 +4,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $settings = get_option('erd_settings', array());
+
+// Enqueue the countdown timer script
+wp_enqueue_script('erd-countdown-timer');
+
+// Pass all settings to JavaScript
+wp_localize_script('erd-countdown-timer', 'erdTimerSettings', array(
+    'warmupTime' => intval($settings['warmup_time'] ?? 5),
+    'matchTime' => intval($settings['match_time'] ?? 85),
+    'breakTime' => intval($settings['break_time'] ?? 5),
+    'startTimeMinutes' => intval($settings['start_time_minutes'] ?? 0),
+    'startTimeSeconds' => intval($settings['start_time_seconds'] ?? 0),
+    'startSoundUrl' => !empty($settings['start_sound_id']) ? wp_get_attachment_url($settings['start_sound_id']) : '',
+    'endSoundUrl' => !empty($settings['end_sound_id']) ? wp_get_attachment_url($settings['end_sound_id']) : '',
+    'startSoundDuration' => intval($settings['start_sound_duration'] ?? 0),
+    'endSoundDuration' => intval($settings['end_sound_duration'] ?? 0)
+));
 ?>
 
 <!-- Timer Elements -->
@@ -22,16 +38,6 @@ $settings = get_option('erd_settings', array());
 </div>
 <div id="erd-current-match-index"></div>
 <div id="erd-match-details"></div>
-
-<script type="text/javascript">
-    var erdTimerSettings = {
-        warmupTime: <?php echo esc_js($settings['warmup_time'] ?? 5); ?>,
-        matchTime: <?php echo esc_js($settings['match_time'] ?? 85); ?>,
-        breakTime: <?php echo esc_js($settings['break_time'] ?? 5); ?>,
-        startTimeMinutes: <?php echo esc_js($settings['start_time_minutes'] ?? 0); ?>,
-        startTimeSeconds: <?php echo esc_js($settings['start_time_seconds'] ?? 0); ?>
-    };
-</script>
 
 <?php
 // Match schedule section removed for now

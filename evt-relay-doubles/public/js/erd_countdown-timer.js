@@ -1,10 +1,14 @@
 jQuery(document).ready(function ($) {
+    // Get audio settings
+    var startSound = new Audio(erdTimerSettings.startSoundUrl);
+    var endSound = new Audio(erdTimerSettings.endSoundUrl);
+    var startSoundDuration = parseInt(erdTimerSettings.startSoundDuration) || 0;
+    var endSoundDuration = parseInt(erdTimerSettings.endSoundDuration) || 0;
+
     // Initialize timer settings
-    var warmupTime = erdTimerSettings.warmupTime * 60; // Convert to seconds
-    var matchTime = erdTimerSettings.matchTime * 60; // Convert to seconds
-    var breakTime = erdTimerSettings.breakTime * 60; // Convert to seconds
-    var audioUrl = erdTimerSettings.audioUrl;
-    var audio = new Audio(audioUrl);
+    var warmupTime = erdTimerSettings.warmupTime * 60;
+    var matchTime = erdTimerSettings.matchTime * 60;
+    var breakTime = erdTimerSettings.breakTime * 60;
 
     var startTimeMinutes = erdTimerSettings.startTimeMinutes || 0;
     var startTimeSeconds = erdTimerSettings.startTimeSeconds || 0;
@@ -12,6 +16,14 @@ jQuery(document).ready(function ($) {
 
     var currentPhase = startTime > 0 ? 'match' : 'warmup';
     var timeLeft = startTime > 0 ? startTime : warmupTime;
+
+    // Debug logging
+    console.log('Audio Settings:', {
+        startSoundUrl: erdTimerSettings.startSoundUrl,
+        endSoundUrl: erdTimerSettings.endSoundUrl,
+        startSoundDuration: startSoundDuration,
+        endSoundDuration: endSoundDuration
+    });
 
     function updateTimerDisplay() {
         var minutes = Math.floor(timeLeft / 60);
@@ -34,11 +46,26 @@ jQuery(document).ready(function ($) {
         updateMessageDisplay();
         var timerInterval = setInterval(function () {
             if (timeLeft > 0) {
+                // Debug logging for audio triggers
+                console.log('Current Phase:', currentPhase, 'Time Left:', timeLeft);
+
+                // Check if we need to play start sound
+                if (currentPhase === 'warmup' && timeLeft === startSoundDuration) {
+                    console.log('Playing start sound');
+                    startSound.play().catch(function (error) {
+                        console.error('Error playing start sound:', error);
+                    });
+                }
+                // Check if we need to play end sound
+                else if (currentPhase === 'match' && timeLeft === endSoundDuration) {
+                    console.log('Playing end sound');
+                    endSound.play().catch(function (error) {
+                        console.error('Error playing end sound:', error);
+                    });
+                }
+
                 timeLeft--;
                 updateTimerDisplay();
-                if (timeLeft === audio.duration) {
-                    audio.play();
-                }
             } else {
                 clearInterval(timerInterval);
                 switchPhase();

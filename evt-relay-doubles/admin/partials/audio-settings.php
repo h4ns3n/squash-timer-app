@@ -24,6 +24,11 @@ function erd_render_audio_settings($settings) {
                            id="erd-start-sound-id"
                            value="<?php echo esc_attr($settings['start_sound_id'] ?? ''); ?>" />
 
+                    <input type="hidden"
+                           name="erd_settings[start_sound_duration]"
+                           id="erd-start-sound-duration"
+                           value="<?php echo esc_attr($settings['start_sound_duration'] ?? '0'); ?>" />
+
                     <button type="button"
                             class="button"
                             id="erd-upload-start-sound">
@@ -39,6 +44,7 @@ function erd_render_audio_settings($settings) {
                                         <source src="<?php echo esc_url($audio_url); ?>" type="audio/mpeg">
                                     </audio>
                                     <br>
+                                    <span class="duration-info">Duration: <?php echo esc_attr($settings['start_sound_duration'] ?? '0'); ?> seconds</span><br>
                                     <button type="button"
                                             class="button erd-remove-sound"
                                             data-target="start">
@@ -62,6 +68,11 @@ function erd_render_audio_settings($settings) {
                            id="erd-end-sound-id"
                            value="<?php echo esc_attr($settings['end_sound_id'] ?? ''); ?>" />
 
+                    <input type="hidden"
+                           name="erd_settings[end_sound_duration]"
+                           id="erd-end-sound-duration"
+                           value="<?php echo esc_attr($settings['end_sound_duration'] ?? '0'); ?>" />
+
                     <button type="button"
                             class="button"
                             id="erd-upload-end-sound">
@@ -77,6 +88,7 @@ function erd_render_audio_settings($settings) {
                                         <source src="<?php echo esc_url($audio_url); ?>" type="audio/mpeg">
                                     </audio>
                                     <br>
+                                    <span class="duration-info">Duration: <?php echo esc_attr($settings['end_sound_duration'] ?? '0'); ?> seconds</span><br>
                                     <button type="button"
                                             class="button erd-remove-sound"
                                             data-target="end">
@@ -115,19 +127,25 @@ function erd_render_audio_settings($settings) {
             mediaUploader.on('select', function() {
                 var attachment = mediaUploader.state().get('selection').first().toJSON();
 
-                // Update hidden input
-                $('#erd-' + type + '-sound-id').val(attachment.id);
+                // Create a temporary audio element to get duration
+                var audio = new Audio(attachment.url);
+                audio.addEventListener('loadedmetadata', function() {
+                    // Update hidden inputs
+                    $('#erd-' + type + '-sound-id').val(attachment.id);
+                    $('#erd-' + type + '-sound-duration').val(Math.ceil(audio.duration));
 
-                // Update preview
-                var audioPreview = '<div class="audio-preview">' +
-                    '<audio controls>' +
-                    '<source src="' + attachment.url + '" type="audio/mpeg">' +
-                    '</audio><br>' +
-                    '<button type="button" class="button erd-remove-sound" data-target="' + type + '">' +
-                    '<?php esc_html_e('Remove Sound', 'erdct-textdomain'); ?>' +
-                    '</button></div>';
+                    // Update preview
+                    var audioPreview = '<div class="audio-preview">' +
+                        '<audio controls>' +
+                        '<source src="' + attachment.url + '" type="audio/mpeg">' +
+                        '</audio><br>' +
+                        '<span class="duration-info">Duration: ' + Math.ceil(audio.duration) + ' seconds</span><br>' +
+                        '<button type="button" class="button erd-remove-sound" data-target="' + type + '">' +
+                        '<?php esc_html_e('Remove Sound', 'erdct-textdomain'); ?>' +
+                        '</button></div>';
 
-                $('#erd-' + type + '-sound-preview').html(audioPreview);
+                    $('#erd-' + type + '-sound-preview').html(audioPreview);
+                });
             });
 
             return mediaUploader;
