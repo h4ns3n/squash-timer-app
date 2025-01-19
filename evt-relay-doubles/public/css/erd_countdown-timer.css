@@ -26,10 +26,15 @@
 
 /* Since font sizes and colors are set inline, no need to define them here */
 
+#erd-timer-message {
+    margin-bottom: 10px;
+}
+
 #erd-timer-display {
     font-size: var(--timer-font-size, 20pt);
+    color: var(--timer-font-color, #000000);
     text-align: center;
-    margin: 20px 0;
+    margin: 20px 0 10px 0;
 }
 
 #erd-start-button {
