@@ -13,7 +13,19 @@ jQuery(document).ready(function ($) {
         $('#erd-timer-display').text(minutes + ':' + (seconds < 10 ? '0' : '') + seconds);
     }
 
+    function updateMessageDisplay() {
+        if (currentPhase === 'warmup') {
+            $('#erd-timer-message').text('Match Warm Up');
+        } else if (currentPhase === 'match') {
+            $('#erd-timer-message').text('Relay Doubles Match In Progress');
+        } else if (currentPhase === 'break') {
+            $('#erd-timer-message').text('Break Between Schedules');
+        }
+    }
+
     function startTimer() {
+        $('#erd-start-button').hide();
+        updateMessageDisplay();
         var timerInterval = setInterval(function () {
             if (timeLeft > 0) {
                 timeLeft--;
@@ -36,6 +48,7 @@ jQuery(document).ready(function ($) {
             currentPhase = 'warmup';
             timeLeft = warmupTime;
         }
+        updateMessageDisplay();
         startTimer();
     }
 
