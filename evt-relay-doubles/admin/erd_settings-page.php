@@ -23,6 +23,28 @@ function erd_render_settings_page() {
                 </tr>
             </table>
 
+            <h2><?php esc_html_e('Timer Settings', 'erdct-textdomain'); ?></h2>
+            <table class="form-table">
+                <tr valign="top">
+                    <th scope="row"><?php esc_html_e('Warm-up Time (minutes)', 'erdct-textdomain'); ?></th>
+                    <td>
+                        <input type="number" name="erd_settings[warmup_time]" value="<?php echo esc_attr($settings['warmup_time'] ?? 5); ?>" min="1" max="60" />
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row"><?php esc_html_e('Match Time (minutes)', 'erdct-textdomain'); ?></th>
+                    <td>
+                        <input type="number" name="erd_settings[match_time]" value="<?php echo esc_attr($settings['match_time'] ?? 85); ?>" min="1" max="120" />
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row"><?php esc_html_e('Break Time (minutes)', 'erdct-textdomain'); ?></th>
+                    <td>
+                        <input type="number" name="erd_settings[break_time]" value="<?php echo esc_attr($settings['break_time'] ?? 5); ?>" min="1" max="60" />
+                    </td>
+                </tr>
+            </table>
+
             <?php submit_button(); ?>
         </form>
     </div>

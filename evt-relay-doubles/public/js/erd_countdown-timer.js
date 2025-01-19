@@ -1,85 +1,47 @@
 jQuery(document).ready(function ($) {
-    var Timer = {
-        totalMatches: 2, // Assuming 2 matches for demonstration
-        currentMatchIndex: 1,
-        phase: 'warmup',
-        timeLeft: 5 * 60, // 5 minutes warm-up
-        warmupDuration: 5 * 60,
-        matchDuration: 85 * 60,
-        breakDuration: 5 * 60,
-        interval: null,
+    // Initialize timer settings
+    var warmupTime = erdTimerSettings.warmupTime * 60; // Convert to seconds
+    var matchTime = erdTimerSettings.matchTime * 60; // Convert to seconds
+    var breakTime = erdTimerSettings.breakTime * 60; // Convert to seconds
 
-        elements: {
-            timer: $('#erd-timer-display'),
-            matchNumber: $('#erd-current-match-index'),
-            startButton: $('#erd-start-button'),
-            matchDetails: $('#erd-match-details')
-        },
+    var currentPhase = 'warmup'; // Possible values: 'warmup', 'match', 'break'
+    var timeLeft = warmupTime;
 
-        init: function () {
-            this.bindEvents();
-            this.updateDisplay();
-        },
+    function updateTimerDisplay() {
+        var minutes = Math.floor(timeLeft / 60);
+        var seconds = timeLeft % 60;
+        $('#erd-timer-display').text(minutes + ':' + (seconds < 10 ? '0' : '') + seconds);
+    }
 
-        bindEvents: function () {
-            var self = this;
-            this.elements.startButton.on('click', function () {
-                self.start();
-            });
-        },
-
-        start: function () {
-            this.elements.startButton.prop('disabled', true).hide();
-            this.startTimer();
-        },
-
-        startTimer: function () {
-            var self = this;
-            this.interval = setInterval(function () {
-                self.tick();
-            }, 1000);
-        },
-
-        tick: function () {
-            this.timeLeft--;
-            this.updateDisplay();
-
-            if (this.timeLeft <= 0) {
-                this.handlePhaseEnd();
+    function startTimer() {
+        var timerInterval = setInterval(function () {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateTimerDisplay();
+            } else {
+                clearInterval(timerInterval);
+                switchPhase();
             }
-        },
+        }, 1000);
+    }
 
-        handlePhaseEnd: function () {
-            if (this.phase === 'warmup') {
-                this.phase = 'match';
-                this.timeLeft = this.matchDuration;
-            } else if (this.phase === 'match') {
-                this.currentMatchIndex++;
-                if (this.currentMatchIndex <= this.totalMatches) {
-                    this.phase = 'break';
-                    this.timeLeft = this.breakDuration;
-                } else {
-                    this.endAllMatches();
-                }
-            } else if (this.phase === 'break') {
-                this.phase = 'warmup';
-                this.timeLeft = this.warmupDuration;
-            }
-        },
-
-        endAllMatches: function () {
-            clearInterval(this.interval);
-            this.elements.timer.text('00:00');
-            this.elements.matchDetails.text('All matches are complete.');
-        },
-
-        updateDisplay: function () {
-            var minutes = Math.floor(this.timeLeft / 60);
-            var seconds = this.timeLeft % 60;
-            this.elements.timer.text((minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds);
-            this.elements.matchNumber.text('Match ' + this.currentMatchIndex);
+    function switchPhase() {
+        if (currentPhase === 'warmup') {
+            currentPhase = 'match';
+            timeLeft = matchTime;
+        } else if (currentPhase === 'match') {
+            currentPhase = 'break';
+            timeLeft = breakTime;
+        } else {
+            currentPhase = 'warmup';
+            timeLeft = warmupTime;
         }
-    };
+        startTimer();
+    }
 
-    Timer.init();
+    $('#erd-start-button').on('click', function () {
+        startTimer();
+    });
+
+    updateTimerDisplay();
 });
