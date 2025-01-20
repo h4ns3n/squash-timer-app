@@ -28,32 +28,15 @@ if (is_admin()) {
 
 // Enqueue scripts and styles.
 function erd_enqueue_scripts() {
-    wp_enqueue_style(
-        'erd-frontend-css',
-        ERD_PLUGIN_URL . 'public/css/erd_countdown-timer.css',
-        array(),
-        ERD_VERSION
-    );
+    wp_enqueue_style('erd-countdown-timer', plugins_url('public/css/erd_countdown-timer.css', __FILE__));
 
-    $settings = get_option('erd_settings', array());
-    $font_size = isset($settings['timer_font_size']) ? absint($settings['timer_font_size']) : 20;
-
-    // Add inline style for font size
-    wp_add_inline_style('erd-frontend-css', ":root { --timer-font-size: {$font_size}pt; }");
-
-    wp_enqueue_script(
-        'erd-frontend-js',
-        ERD_PLUGIN_URL . 'public/js/erd_countdown-timer.js',
+    wp_register_script(
+        'erd-countdown-timer',
+        plugins_url('public/js/erd_countdown-timer.js', __FILE__),
         array('jquery'),
-        ERD_VERSION,
+        '1.0.0',
         true
     );
-
-    wp_localize_script('erd-frontend-js', 'erdSettings', array(
-        'startSoundUrl' => '',
-        'endSoundUrl' => '',
-        'volume' => 100
-    ));
 }
 add_action('wp_enqueue_scripts', 'erd_enqueue_scripts');
 
