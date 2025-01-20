@@ -2,7 +2,7 @@
 /*
 Plugin Name: Relay Doubles Countdown Timer
 Description: Displays a countdown timer for the Evertsdal Relay squash matches.
-Version: 1.0
+Version: 1.1
 Author: Paul Hansen
 License: GPL2
 Text Domain: evertsdal-relay-doubles-league
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 // Define plugin constants.
 define('ERD_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('ERD_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('ERD_VERSION', '1.0.0');
+define('ERD_VERSION', '1.1.0');
 
 // Include necessary files.
 require_once ERD_PLUGIN_DIR . 'includes/erd_helpers.php';
@@ -34,7 +34,7 @@ function erd_enqueue_scripts() {
         'erd-countdown-timer',
         plugins_url('public/js/erd_countdown-timer.js', __FILE__),
         array('jquery'),
-        '1.0.0',
+        '1.1.0',
         true
     );
 }
