@@ -2,6 +2,7 @@ package com.evertsdal.squashtimertv.ui.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,56 +34,60 @@ fun SettingsScreen(
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(48.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Timer Settings",
-            style = MaterialTheme.typography.displayMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.Bold
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(48.dp)
+                .padding(bottom = 140.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Timer Settings",
+                style = MaterialTheme.typography.displayMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold
+            )
 
-        Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
-        SettingRow(
-            label = "Warmup Time",
-            value = "${settings.warmupMinutes} min",
-            onDecrease = { viewModel.decreaseWarmupTime() },
-            onIncrease = { viewModel.increaseWarmupTime() }
-        )
+            SettingRow(
+                label = "Warmup Time",
+                value = "${settings.warmupMinutes} min",
+                onDecrease = { viewModel.decreaseWarmupTime() },
+                onIncrease = { viewModel.increaseWarmupTime() }
+            )
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        SettingRow(
-            label = "Match Time",
-            value = "${settings.matchMinutes} min",
-            onDecrease = { viewModel.decreaseMatchTime() },
-            onIncrease = { viewModel.increaseMatchTime() }
-        )
+            SettingRow(
+                label = "Match Time",
+                value = "${settings.matchMinutes} min",
+                onDecrease = { viewModel.decreaseMatchTime() },
+                onIncrease = { viewModel.increaseMatchTime() }
+            )
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        SettingRow(
-            label = "Break Time",
-            value = "${settings.breakMinutes} min",
-            onDecrease = { viewModel.decreaseBreakTime() },
-            onIncrease = { viewModel.increaseBreakTime() }
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Spacer(modifier = Modifier.height(32.dp))
+            SettingRow(
+                label = "Break Time",
+                value = "${settings.breakMinutes} min",
+                onDecrease = { viewModel.decreaseBreakTime() },
+                onIncrease = { viewModel.increaseBreakTime() }
+            )
+        }
 
         Button(
             onClick = onNavigateBack,
             modifier = Modifier
+                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+                .padding(48.dp)
                 .height(80.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -95,8 +100,6 @@ fun SettingsScreen(
                 fontWeight = FontWeight.Bold
             )
         }
-
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
