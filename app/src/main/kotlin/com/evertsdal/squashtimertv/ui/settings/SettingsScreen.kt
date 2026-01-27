@@ -43,7 +43,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(48.dp)
-                .padding(bottom = 220.dp)
+                .padding(bottom = 160.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
