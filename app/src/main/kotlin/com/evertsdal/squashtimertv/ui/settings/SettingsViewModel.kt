@@ -43,14 +43,14 @@ class SettingsViewModel @Inject constructor(
 
     fun increaseMatchTime() {
         viewModelScope.launch {
-            val newValue = (_settings.value.matchMinutes + 5).coerceAtMost(180)
+            val newValue = (_settings.value.matchMinutes + 1).coerceAtMost(180)
             settingsRepository.updateMatchMinutes(newValue)
         }
     }
 
     fun decreaseMatchTime() {
         viewModelScope.launch {
-            val newValue = (_settings.value.matchMinutes - 5).coerceAtLeast(1)
+            val newValue = (_settings.value.matchMinutes - 1).coerceAtLeast(1)
             settingsRepository.updateMatchMinutes(newValue)
         }
     }

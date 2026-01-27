@@ -89,10 +89,10 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `increaseMatchTime updates in 5-minute increments`() = runTest {
+    fun `increaseMatchTime updates in 1-minute increments`() = runTest {
         viewModel.increaseMatchTime()
         
-        coVerify { settingsRepository.updateMatchMinutes(90) }
+        coVerify { settingsRepository.updateMatchMinutes(86) }
     }
 
     @Test
@@ -109,10 +109,10 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `decreaseMatchTime updates in 5-minute increments`() = runTest {
+    fun `decreaseMatchTime updates in 1-minute increments`() = runTest {
         viewModel.decreaseMatchTime()
         
-        coVerify { settingsRepository.updateMatchMinutes(80) }
+        coVerify { settingsRepository.updateMatchMinutes(84) }
     }
 
     @Test
