@@ -54,7 +54,7 @@ fun TimerScreen(
             Text(
                 text = timerState.phase.getLabel(),
                 style = MaterialTheme.typography.headlineLarge,
-                color = Color(settings.messageColor),
+                color = MaterialTheme.colorScheme.tertiary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -65,7 +65,7 @@ fun TimerScreen(
                 text = timerState.formatTime(),
                 fontSize = settings.timerFontSize.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(settings.timerColor),
+                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
