@@ -119,13 +119,13 @@ class SettingsViewModelTest {
     fun `decreaseMatchTime respects minimum value`() = runTest {
         // Setup with min match time
         every { settingsRepository.getSettings() } returns 
-            flowOf(defaultSettings.copy(matchMinutes = 5))
+            flowOf(defaultSettings.copy(matchMinutes = 1))
         
         val minViewModel = SettingsViewModel(settingsRepository)
         minViewModel.decreaseMatchTime()
         
-        // Should stay at 5, not decrease
-        coVerify { settingsRepository.updateMatchMinutes(5) }
+        // Should stay at 1, not decrease
+        coVerify { settingsRepository.updateMatchMinutes(1) }
     }
 
     @Test
