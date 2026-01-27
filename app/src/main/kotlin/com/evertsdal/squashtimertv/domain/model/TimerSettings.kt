@@ -10,6 +10,6 @@ data class TimerSettings(
     val endSoundDurationSeconds: Int = 0,
     val timerFontSize: Int = 120,
     val messageFontSize: Int = 48,
-    val timerColor: Long = 0xFFFFFFFF,
-    val messageColor: Long = 0xFFFFFFFF
+    val timerColor: Long = 0xFF00A8E8,
+    val messageColor: Long = 0xFFFF6B35
 )

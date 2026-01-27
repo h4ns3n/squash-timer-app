@@ -72,48 +72,46 @@ fun TimerScreen(
 
             Spacer(modifier = Modifier.height(64.dp))
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(24.dp),
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (!timerState.isRunning && !timerState.isPaused) {
-                    TVButton(
-                        text = "Start Timer",
-                        onClick = { viewModel.startTimer() },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                if (timerState.isRunning) {
-                    TVButton(
-                        text = "Pause",
-                        onClick = { viewModel.pauseTimer() },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                if (timerState.isPaused) {
-                    TVButton(
-                        text = "Resume",
-                        onClick = { viewModel.resumeTimer() },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
+            if (!timerState.isRunning && !timerState.isPaused) {
                 TVButton(
-                    text = "Restart",
-                    onClick = { viewModel.restartTimer() },
-                    modifier = Modifier.weight(1f)
+                    text = "Start Timer",
+                    onClick = { viewModel.startTimer() },
+                    modifier = Modifier.width(300.dp)
                 )
+            }
 
+            if (timerState.isRunning) {
                 TVButton(
-                    text = "Settings",
-                    onClick = onNavigateToSettings,
-                    modifier = Modifier.weight(1f)
+                    text = "Pause",
+                    onClick = { viewModel.pauseTimer() },
+                    modifier = Modifier.width(300.dp)
+                )
+            }
+
+            if (timerState.isPaused) {
+                TVButton(
+                    text = "Resume",
+                    onClick = { viewModel.resumeTimer() },
+                    modifier = Modifier.width(300.dp)
                 )
             }
         }
+
+        CompactButton(
+            text = "Restart",
+            onClick = { viewModel.restartTimer() },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(32.dp)
+        )
+
+        CompactButton(
+            text = "Settings",
+            onClick = onNavigateToSettings,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(32.dp)
+        )
         
         // Error message display at the bottom
         errorMessage?.let { message ->
@@ -189,6 +187,30 @@ fun TVButton(
         Text(
             text = text,
             fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun CompactButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .width(160.dp)
+            .height(60.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.secondary,
+            contentColor = MaterialTheme.colorScheme.onSecondary
+        )
+    ) {
+        Text(
+            text = text,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
     }

@@ -75,7 +75,9 @@ fun SettingsScreen(
             onIncrease = { viewModel.increaseBreakTime() }
         )
 
-        Spacer(modifier = Modifier.height(64.dp))
+        Spacer(modifier = Modifier.weight(1f))
+
+        Spacer(modifier = Modifier.height(32.dp))
 
         Button(
             onClick = onNavigateBack,
@@ -93,6 +95,8 @@ fun SettingsScreen(
                 fontWeight = FontWeight.Bold
             )
         }
+
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
