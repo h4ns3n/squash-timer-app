@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Squash Timer TV</string>
+    <string name="warmup_label">Match Warm Up</string>
+    <string name="match_label">Relay Doubles Match In Progress</string>
+    <string name="break_label">Break Between Schedules</string>
+    <string name="start_button">Start Timer</string>
+    <string name="pause_button">Pause</string>
+    <string name="resume_button">Resume</string>
+    <string name="restart_button">Restart</string>
+    <string name="settings_button">Settings</string>
+</resources>

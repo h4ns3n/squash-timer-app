@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SquashTimerTV" parent="Theme.Leanback">
+        <!-- TV-optimized theme -->
+        <item name="android:colorPrimary">@color/ic_launcher_background</item>
+    </style>
+</resources>
