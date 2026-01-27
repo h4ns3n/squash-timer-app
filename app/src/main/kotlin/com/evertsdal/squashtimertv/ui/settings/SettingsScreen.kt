@@ -43,7 +43,6 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(48.dp)
-                .padding(bottom = 160.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -85,18 +84,18 @@ fun SettingsScreen(
         Button(
             onClick = onNavigateBack,
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(48.dp)
-                .height(80.dp),
+                .align(Alignment.TopStart)
+                .padding(32.dp)
+                .width(180.dp)
+                .height(60.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = MaterialTheme.colorScheme.onSecondary
             )
         ) {
             Text(
-                text = "Back to Timer",
-                fontSize = 24.sp,
+                text = "Back",
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
         }
