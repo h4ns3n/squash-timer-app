@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         
         setContent {
-            SquashTimerTVTheme {
+            SquashTimerTVTheme(darkTheme = false) {
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
