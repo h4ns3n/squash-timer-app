@@ -44,7 +44,7 @@ class WebSocketServer @Inject constructor(
             return
         }
         
-        server = embeddedServer(Netty, port = port) {
+        server = embeddedServer(Netty, host = "0.0.0.0", port = port) {
             install(WebSockets) {
                 pingPeriod = Duration.ofSeconds(15)
                 timeout = Duration.ofSeconds(15)
