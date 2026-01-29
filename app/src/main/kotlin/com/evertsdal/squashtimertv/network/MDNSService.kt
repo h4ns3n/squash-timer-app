@@ -10,8 +10,8 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.inject.Inject
 import javax.inject.Singleton
-import javax.jmdns.JmDNS
-import javax.jmdns.ServiceInfo
+import org.jmdns.JmDNS
+import org.jmdns.ServiceInfo
 
 /**
  * mDNS service for broadcasting device presence on local network

@@ -94,7 +94,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
     
     // mDNS Service Discovery
-    implementation("javax.jmdns:jmdns:3.5.8")
+    implementation("org.jmdns:jmdns:3.5.9")
     
     // JSON Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
