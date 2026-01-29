@@ -8,6 +8,8 @@ import com.evertsdal.squashtimertv.domain.model.TimerState
 import com.evertsdal.squashtimertv.domain.model.UiState
 import com.evertsdal.squashtimertv.domain.repository.AudioRepository
 import com.evertsdal.squashtimertv.domain.repository.SettingsRepository
+import com.evertsdal.squashtimertv.network.NetworkManager
+import com.evertsdal.squashtimertv.network.models.RemoteCommand
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -22,7 +24,8 @@ import javax.inject.Inject
 @HiltViewModel
 class TimerViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val audioRepository: AudioRepository
+    private val audioRepository: AudioRepository,
+    private val networkManager: NetworkManager
 ) : ViewModel() {
 
     private val _timerUiState = MutableStateFlow<UiState<TimerState>>(UiState.Success(TimerState()))
@@ -47,6 +50,7 @@ class TimerViewModel @Inject constructor(
     private var phaseEndTimeMillis: Long = 0L
 
     init {
+        // Load settings
         viewModelScope.launch {
             try {
                 settingsRepository.getSettings().collect { newSettings ->
@@ -70,6 +74,23 @@ class TimerViewModel @Inject constructor(
                     UiState.Error(it.getData(), "Failed to load settings. Please restart the app.")
                 }
             }
+        }
+        
+        // Broadcast timer state changes to network
+        viewModelScope.launch {
+            timerUiState.collect { uiState ->
+                if (uiState is UiState.Success) {
+                    networkManager.broadcastTimerState(uiState.value)
+                        .onFailure { error ->
+                            Timber.e(error, "Failed to broadcast timer state")
+                        }
+                }
+            }
+        }
+        
+        // Handle remote commands from network
+        networkManager.setCommandHandler { command ->
+            handleRemoteCommand(command)
         }
     }
     
@@ -222,6 +243,24 @@ class TimerViewModel @Inject constructor(
                 }
             }
             TimerPhase.BREAK -> {}
+        }
+    }
+
+    /**
+     * Handle remote commands from web controller
+     */
+    private fun handleRemoteCommand(command: RemoteCommand) {
+        Timber.d("Handling remote command: $command")
+        when (command) {
+            is RemoteCommand.Start -> startTimer()
+            is RemoteCommand.Pause -> pauseTimer()
+            is RemoteCommand.Resume -> resumeTimer()
+            is RemoteCommand.Restart -> restartTimer()
+            is RemoteCommand.SetEmergencyTime -> setEmergencyStartTime(command.minutes, command.seconds)
+            is RemoteCommand.UpdateSettings -> {
+                // Settings updates handled through SettingsRepository
+                Timber.d("Settings update command received (not yet implemented)")
+            }
         }
     }
 
