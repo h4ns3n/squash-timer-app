@@ -22,10 +22,10 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class TimerViewModel @Inject constructor(,
-    private val networkManager: NetworkManager
+class TimerViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val audioRepository: AudioRepository
+    private val audioRepository: AudioRepository,
+    private val networkManager: NetworkManager
 ) : ViewModel() {
 
     private val _timerUiState = MutableStateFlow<UiState<TimerState>>(UiState.Success(TimerState()))
