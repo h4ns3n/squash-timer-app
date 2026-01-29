@@ -44,26 +44,35 @@ class WebSocketServer @Inject constructor(
             return
         }
         
-        server = embeddedServer(Netty, host = "0.0.0.0", port = port) {
-            install(WebSockets) {
-                pingPeriod = Duration.ofSeconds(15)
-                timeout = Duration.ofSeconds(15)
-                maxFrameSize = Long.MAX_VALUE
-                masking = false
-            }
+        try {
+            Timber.d("Starting WebSocket server on 0.0.0.0:$port")
             
-            install(ContentNegotiation) {
-                json(json)
-            }
-            
-            routing {
-                webSocket("/ws") {
-                    handleWebSocketConnection(this)
+            server = embeddedServer(Netty, host = "0.0.0.0", port = port) {
+                install(WebSockets) {
+                    pingPeriod = Duration.ofSeconds(15)
+                    timeout = Duration.ofSeconds(15)
+                    maxFrameSize = Long.MAX_VALUE
+                    masking = false
                 }
-            }
-        }.start(wait = false)
-        
-        Timber.i("WebSocket server started on port $port")
+                
+                install(ContentNegotiation) {
+                    json(json)
+                }
+                
+                routing {
+                    webSocket("/ws") {
+                        handleWebSocketConnection(this)
+                    }
+                }
+            }.start(wait = false)
+            
+            Timber.i("✓ WebSocket server started successfully on 0.0.0.0:$port")
+            Timber.i("WebSocket endpoint: ws://0.0.0.0:$port/ws")
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to start WebSocket server on port $port")
+            server = null
+            throw e
+        }
     }
     
     /**
