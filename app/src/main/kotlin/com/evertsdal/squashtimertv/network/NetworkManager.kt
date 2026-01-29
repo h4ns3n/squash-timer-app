@@ -1,12 +1,12 @@
 package com.evertsdal.squashtimertv.network
 
+import com.evertsdal.squashtimertv.di.IoDispatcher
 import com.evertsdal.squashtimertv.domain.model.TimerState
 import com.evertsdal.squashtimertv.network.models.RemoteCommand
 import com.evertsdal.squashtimertv.network.models.SyncMode
 import com.evertsdal.squashtimertv.network.models.WebSocketMessage
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -22,13 +22,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Manages network services and coordinates WebSocket and mDNS
+ * Manages network services and coordinates WebSocket and NSD
  */
 @Singleton
 class NetworkManager @Inject constructor(
     private val webSocketServer: WebSocketServer,
     private val nsdService: NSDService,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
     private var syncMode: SyncMode = SyncMode.INDEPENDENT
