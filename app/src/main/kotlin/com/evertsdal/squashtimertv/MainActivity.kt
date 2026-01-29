@@ -11,18 +11,38 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.lifecycleScope
+import com.evertsdal.squashtimertv.network.NetworkManager
 import com.evertsdal.squashtimertv.ui.settings.SettingsScreen
 import com.evertsdal.squashtimertv.ui.theme.SquashTimerTVTheme
 import com.evertsdal.squashtimertv.ui.timer.TimerScreen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import timber.log.Timber
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    
+    @Inject
+    lateinit var networkManager: NetworkManager
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         // Keep screen on during timer operation - critical for 85-minute matches
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        
+        // Initialize network services
+        lifecycleScope.launch {
+            networkManager.initialize()
+                .onSuccess {
+                    Timber.i("Network services initialized successfully")
+                }
+                .onFailure { error ->
+                    Timber.e(error, "Failed to initialize network services")
+                }
+        }
         
         setContent {
             SquashTimerTVTheme(darkTheme = false) {
@@ -55,5 +75,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        networkManager.shutdown()
     }
 }

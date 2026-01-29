@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.20"
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
 }
@@ -85,6 +86,18 @@ dependencies {
     
     // Logging
     implementation("com.jakewharton.timber:timber:5.0.1")
+
+    // WebSocket Server (Ktor)
+    implementation("io.ktor:ktor-server-core:2.3.7")
+    implementation("io.ktor:ktor-server-netty:2.3.7")
+    implementation("io.ktor:ktor-server-websockets:2.3.7")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
+    
+    // mDNS Service Discovery
+    implementation("javax.jmdns:jmdns:3.5.8")
+    
+    // JSON Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
     // Testing
     testImplementation("junit:junit:4.13.2")
