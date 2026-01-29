@@ -27,7 +27,7 @@ import javax.inject.Singleton
 @Singleton
 class NetworkManager @Inject constructor(
     private val webSocketServer: WebSocketServer,
-    private val mdnsService: MDNSService,
+    private val nsdService: NSDService,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
@@ -46,8 +46,8 @@ class NetworkManager @Inject constructor(
      */
     suspend fun initialize(): Result<Unit> = runCatching {
         withTimeout(10_000) {
-            val deviceId = mdnsService.getDeviceId()
-            val deviceName = mdnsService.getDeviceName()
+            val deviceId = nsdService.getDeviceId()
+            val deviceName = nsdService.getDeviceName()
             
             Timber.i("Initializing network services for device: $deviceName ($deviceId)")
             
@@ -56,9 +56,9 @@ class NetworkManager @Inject constructor(
                 webSocketServer.start(port = 8080)
             }
             
-            // Register mDNS service
+            // Register NSD service
             withContext(ioDispatcher) {
-                mdnsService.registerService(8080, deviceId, deviceName)
+                nsdService.registerService(8080, deviceId, deviceName)
             }
             
             // Set up message handler
@@ -170,7 +170,7 @@ class NetworkManager @Inject constructor(
         val message = WebSocketMessage(
             type = "STATE_UPDATE",
             timestamp = System.currentTimeMillis(),
-            deviceId = mdnsService.getDeviceId(),
+            deviceId = nsdService.getDeviceId(),
             payload = payload
         )
         
@@ -192,7 +192,7 @@ class NetworkManager @Inject constructor(
         val ackMessage = WebSocketMessage(
             type = "COMMAND_ACK",
             timestamp = System.currentTimeMillis(),
-            deviceId = mdnsService.getDeviceId(),
+            deviceId = nsdService.getDeviceId(),
             payload = payload
         )
         
@@ -214,7 +214,7 @@ class NetworkManager @Inject constructor(
         val errorMsg = WebSocketMessage(
             type = "COMMAND_ERROR",
             timestamp = System.currentTimeMillis(),
-            deviceId = mdnsService.getDeviceId(),
+            deviceId = nsdService.getDeviceId(),
             payload = payload
         )
         
@@ -254,7 +254,7 @@ class NetworkManager @Inject constructor(
     fun shutdown() {
         Timber.i("Shutting down network services")
         webSocketServer.stop()
-        mdnsService.unregisterService()
+        nsdService.unregisterService()
         scope.cancel()
     }
 }
