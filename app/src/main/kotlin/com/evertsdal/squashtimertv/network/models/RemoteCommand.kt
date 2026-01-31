@@ -31,4 +31,11 @@ sealed class RemoteCommand {
         val matchMinutes: Int? = null,
         val breakMinutes: Int? = null
     ) : RemoteCommand()
+    
+    @Serializable
+    data class SyncState(
+        val phase: String,
+        val timeLeftSeconds: Int,
+        val isRunning: Boolean
+    ) : RemoteCommand()
 }

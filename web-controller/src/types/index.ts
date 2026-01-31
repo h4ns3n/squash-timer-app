@@ -34,6 +34,20 @@ export interface WebSocketMessage {
   payload: any
 }
 
+export interface TimerSettings {
+  warmupMinutes: number
+  matchMinutes: number
+  breakMinutes: number
+  timerFontSize?: number
+  messageFontSize?: number
+  timerColor?: number
+  messageColor?: number
+  startSoundUri?: string
+  endSoundUri?: string
+  startSoundDurationSeconds?: number
+  endSoundDurationSeconds?: number
+}
+
 export type RemoteCommand = 
   | { type: 'START_TIMER' }
   | { type: 'PAUSE_TIMER' }
@@ -41,3 +55,6 @@ export type RemoteCommand =
   | { type: 'RESTART_TIMER' }
   | { type: 'SET_SYNC_MODE'; mode: SyncMode; controllerId?: string }
   | { type: 'SET_EMERGENCY_TIME'; minutes: number; seconds: number }
+  | { type: 'GET_SETTINGS' }
+  | { type: 'SYNC_SETTINGS'; settings: TimerSettings }
+  | { type: 'SYNC_TIMER_STATE'; phase: string; timeLeftSeconds: number; isRunning: boolean }

@@ -9,6 +9,9 @@ Web-based controller for the Squash Timer Android TV app.
 - 📊 Real-time timer state updates
 - 🔄 WebSocket communication
 - 💾 Persistent device storage
+- 📺 **Multi-TV Control** - Connect and control multiple TVs simultaneously
+- ⭐ **Master Device Selection** - Designate a master TV for settings sync
+- 🔄 **Settings Sync** - Sync timer settings (warmup, match, break durations) from master to all connected TVs
 
 ## Tech Stack
 
@@ -54,6 +57,8 @@ npm run preview
 
 ## Usage
 
+### Single TV Control
+
 1. **Add a Device**
    - Click "Add Device"
    - Enter the Android TV's IP address (e.g., 192.168.1.100)
@@ -69,6 +74,26 @@ npm run preview
    - Use Start/Pause/Resume/Restart buttons
    - View real-time timer state
    - See current phase (Warmup/Match/Break)
+
+### Multi-TV Control (Synchronized)
+
+1. **Connect Multiple TVs**
+   - Add and connect to multiple Android TVs
+   - The first connected TV becomes the **Master** device (shown with yellow badge)
+
+2. **Master Device Selection**
+   - The master device's settings and timer state are used as the source of truth
+   - To change the master, click "Set Master" on any connected non-master TV
+   - The master device's settings are displayed in the yellow banner
+
+3. **Sync Settings to All TVs**
+   - Click "Sync All TVs" to broadcast the master's settings to all connected TVs
+   - This syncs: warmup duration, match duration, break duration, and current timer state
+   - All connected TVs will now have identical settings and timer state
+
+4. **Synchronized Control**
+   - All timer commands (Start, Pause, Restart) are sent to ALL connected TVs simultaneously
+   - TVs stay synchronized as long as they're connected through the web controller
 
 ## Network Requirements
 
@@ -116,8 +141,11 @@ src/
 ## Future Enhancements
 
 - [ ] Automatic mDNS device discovery (requires browser extension or native app)
-- [ ] Settings control from web interface
-- [ ] Multiple device synchronization UI
+- [x] ~~Settings control from web interface~~ - Settings sync from master device implemented
+- [x] ~~Multiple device synchronization UI~~ - Multi-TV control with master selection implemented
 - [ ] Emergency time setting
-- [ ] Connection status indicators
+- [x] ~~Connection status indicators~~ - Connected/disconnected status shown
 - [ ] Dark mode support
+- [ ] Audio settings sync (sound URIs, durations)
+- [ ] Display settings sync (font sizes, colors)
+- [ ] Title/header settings sync

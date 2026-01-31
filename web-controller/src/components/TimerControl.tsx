@@ -3,9 +3,9 @@ import { useAppStore } from '../store/useAppStore'
 import { TimerPhase } from '../types'
 
 export function TimerControl() {
-  const { timerState, selectedDeviceId, sendCommand } = useAppStore()
+  const { timerState, connectedDeviceIds, sendCommand } = useAppStore()
 
-  if (!selectedDeviceId) {
+  if (connectedDeviceIds.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="text-center py-12 text-gray-500">

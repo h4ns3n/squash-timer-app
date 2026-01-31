@@ -76,15 +76,18 @@ class TimerViewModel @Inject constructor(
             }
         }
         
-        // Broadcast timer state changes to network
+        // Broadcast timer state periodically to network (every second)
+        // This ensures new clients receive the current state immediately upon connection
         viewModelScope.launch {
-            timerUiState.collect { uiState ->
+            while (true) {
+                val uiState = timerUiState.value
                 if (uiState is UiState.Success) {
                     networkManager.broadcastTimerState(uiState.value)
                         .onFailure { error ->
                             Timber.e(error, "Failed to broadcast timer state")
                         }
                 }
+                kotlinx.coroutines.delay(1000)
             }
         }
         
@@ -92,6 +95,16 @@ class TimerViewModel @Inject constructor(
         networkManager.setCommandHandler { command ->
             handleRemoteCommand(command)
         }
+        
+        // Set up settings handlers for network sync
+        networkManager.setSettingsHandlers(
+            getter = { _settings.value },
+            setter = { newSettings: TimerSettings ->
+                viewModelScope.launch {
+                    settingsRepository.updateSettings(newSettings)
+                }
+            }
+        )
     }
     
     /**
@@ -261,6 +274,44 @@ class TimerViewModel @Inject constructor(
                 // Settings updates handled through SettingsRepository
                 Timber.d("Settings update command received (not yet implemented)")
             }
+            is RemoteCommand.SyncState -> {
+                syncToState(command.phase, command.timeLeftSeconds, command.isRunning)
+            }
+        }
+    }
+    
+    /**
+     * Sync timer to a specific state from master device
+     */
+    private fun syncToState(phaseName: String, timeLeftSeconds: Int, isRunning: Boolean) {
+        Timber.d("Syncing to state: phase=$phaseName, time=$timeLeftSeconds, running=$isRunning")
+        
+        val phase = try {
+            TimerPhase.valueOf(phaseName)
+        } catch (e: IllegalArgumentException) {
+            Timber.e("Invalid phase name: $phaseName")
+            return
+        }
+        
+        // Cancel any running timer
+        timerJob?.cancel()
+        
+        // Update state to match master (set as not running first)
+        _timerUiState.update { currentState ->
+            val currentData = currentState.getData() ?: return@update currentState
+            UiState.Success(
+                currentData.copy(
+                    phase = phase,
+                    timeLeftSeconds = timeLeftSeconds,
+                    isRunning = false,
+                    isPaused = !isRunning
+                )
+            )
+        }
+        
+        // If master is running, start the timer
+        if (isRunning) {
+            startTimer()
         }
     }
 
