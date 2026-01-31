@@ -18,6 +18,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +34,14 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val isConnectedToWebApp by viewModel.isConnectedToWebApp.collectAsStateWithLifecycle()
+    
+    // Automatically navigate back if connected to web app (settings should not be accessible)
+    LaunchedEffect(isConnectedToWebApp) {
+        if (isConnectedToWebApp) {
+            onNavigateBack()
+        }
+    }
 
     Box(
         modifier = Modifier

@@ -1,6 +1,7 @@
 package com.evertsdal.squashtimertv.ui.timer
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -38,6 +42,7 @@ fun TimerScreen(
     val timerState = timerUiState.getData()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val errorMessage = timerUiState.getErrorMessage()
+    val isConnectedToWebApp by viewModel.isConnectedToWebApp.collectAsStateWithLifecycle()
 
     Box(
         modifier = Modifier
@@ -97,21 +102,32 @@ fun TimerScreen(
             }
         }
 
-        CompactButton(
-            text = "Restart",
-            onClick = { viewModel.restartTimer() },
+        // Connection status indicator
+        ConnectionStatusIndicator(
+            isConnected = isConnectedToWebApp,
             modifier = Modifier
-                .align(Alignment.TopStart)
+                .align(Alignment.BottomStart)
                 .padding(32.dp)
         )
+        
+        // Only show controls when NOT connected to web app (standalone mode)
+        if (!isConnectedToWebApp) {
+            CompactButton(
+                text = "Restart",
+                onClick = { viewModel.restartTimer() },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(32.dp)
+            )
 
-        CompactButton(
-            text = "Settings",
-            onClick = onNavigateToSettings,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(32.dp)
-        )
+            CompactButton(
+                text = "Settings",
+                onClick = onNavigateToSettings,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(32.dp)
+            )
+        }
         
         // Error message display at the bottom
         errorMessage?.let { message ->
@@ -123,6 +139,44 @@ fun TimerScreen(
                     .padding(24.dp)
             )
         }
+    }
+}
+
+@Composable
+fun ConnectionStatusIndicator(
+    isConnected: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .background(
+                color = if (isConnected) Color(0xFF00A8E8).copy(alpha = 0.2f) else Color(0xFF666666).copy(alpha = 0.2f),
+                shape = MaterialTheme.shapes.medium
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Status indicator dot
+        Box(
+            modifier = Modifier
+                .size(16.dp)
+                .clip(CircleShape)
+                .background(if (isConnected) Color(0xFF00A8E8) else Color(0xFF666666))
+                .border(
+                    width = 2.dp,
+                    color = if (isConnected) Color(0xFF00A8E8).copy(alpha = 0.5f) else Color(0xFF666666).copy(alpha = 0.5f),
+                    shape = CircleShape
+                )
+        )
+        
+        // Status text
+        Text(
+            text = if (isConnected) "Web App Connected" else "Standalone Mode",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Medium,
+            color = if (isConnected) Color(0xFF00A8E8) else Color(0xFF999999)
+        )
     }
 }
 

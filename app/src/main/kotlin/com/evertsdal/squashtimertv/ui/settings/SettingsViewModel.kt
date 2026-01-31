@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.evertsdal.squashtimertv.domain.model.TimerSettings
 import com.evertsdal.squashtimertv.domain.repository.SettingsRepository
+import com.evertsdal.squashtimertv.network.NetworkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,11 +14,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val networkManager: NetworkManager
 ) : ViewModel() {
 
     private val _settings = MutableStateFlow(TimerSettings())
     val settings: StateFlow<TimerSettings> = _settings.asStateFlow()
+    
+    // Expose web app connection state
+    val isConnectedToWebApp: StateFlow<Boolean> = networkManager.isConnectedToWebApp
 
     init {
         viewModelScope.launch {

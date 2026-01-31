@@ -34,6 +34,9 @@ class TimerViewModel @Inject constructor(
     private val _settings = MutableStateFlow(TimerSettings())
     val settings: StateFlow<TimerSettings> = _settings.asStateFlow()
     
+    // Expose web app connection state
+    val isConnectedToWebApp: StateFlow<Boolean> = networkManager.isConnectedToWebApp
+    
     // Expose timer state for convenience (unwrapped from UiState)
     val timerState: StateFlow<TimerState> = MutableStateFlow(TimerState()).apply {
         viewModelScope.launch {
