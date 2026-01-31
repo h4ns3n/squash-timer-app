@@ -108,6 +108,11 @@ src/
 └── index.css           # Global styles
 ```
 
+## Deployment
+
+- **[Quick Start Guide](./docs/DEPLOYMENT_GUIDE.md)** - Simple deployment for local network and squash club
+- **[Unraid Docker Guide](./docs/DEPLOYMENT.md)** - Detailed Unraid deployment instructions
+
 ## Future Enhancements
 
 - [ ] Automatic mDNS device discovery (requires browser extension or native app)

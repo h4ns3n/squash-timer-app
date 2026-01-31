@@ -1,18 +1,14 @@
-# Squash Timer Web Controller - Deployment Guide
+# Docker Deployment on Unraid
 
-## 🐳 Docker Deployment on Unraid Server (Recommended)
-
-This guide will help you deploy the web controller to your Unraid server, making it accessible from any device on your local network.
+Quick guide for deploying the Squash Timer web controller to Unraid using Docker.
 
 ## Prerequisites
 
-- Unraid server running and accessible
-- Docker installed on Unraid (default)
-- Android TV app running on your network
+- Unraid server running
+- Docker installed (default on Unraid)
+- Android TV app running on network
 
 ## Quick Start
-
-### Option 1: Using Docker Compose (Recommended)
 
 **1. Copy files to Unraid**
 
@@ -38,41 +34,6 @@ Open your browser and go to:
 ```
 http://unraid-server-ip:3000
 ```
-
-### Option 2: Using Unraid Docker UI
-
-**1. Build the Docker image on your Mac**
-```bash
-cd web-controller
-docker build -t squash-timer-web:latest .
-```
-
-**2. Save the image**
-```bash
-docker save squash-timer-web:latest | gzip > squash-timer-web.tar.gz
-```
-
-**3. Transfer to Unraid**
-```bash
-scp squash-timer-web.tar.gz root@unraid-server-ip:/tmp/
-```
-
-**4. Load on Unraid**
-```bash
-ssh root@unraid-server-ip
-docker load < /tmp/squash-timer-web.tar.gz
-```
-
-**5. Create container in Unraid UI**
-- Go to Docker tab in Unraid
-- Click "Add Container"
-- Fill in:
-  - **Name:** squash-timer-web
-  - **Repository:** squash-timer-web:latest
-  - **Network Type:** Bridge
-  - **Port:** 3000 → 80
-  - **Restart Policy:** Unless stopped
-- Click "Apply"
 
 ## Configuration
 
