@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  squash-timer-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: squash-timer-web
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    networks:
+      - squash-timer-network
+    environment:
+      - NODE_ENV=production
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+networks:
+  squash-timer-network:
+    driver: bridge
