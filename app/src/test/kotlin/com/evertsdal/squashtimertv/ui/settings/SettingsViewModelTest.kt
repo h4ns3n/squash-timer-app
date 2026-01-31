@@ -3,11 +3,13 @@ package com.evertsdal.squashtimertv.ui.settings
 import app.cash.turbine.test
 import com.evertsdal.squashtimertv.domain.model.TimerSettings
 import com.evertsdal.squashtimertv.domain.repository.SettingsRepository
+import com.evertsdal.squashtimertv.network.NetworkManager
 import com.evertsdal.squashtimertv.util.MainDispatcherRule
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -23,6 +25,7 @@ class SettingsViewModelTest {
 
     private lateinit var viewModel: SettingsViewModel
     private lateinit var settingsRepository: SettingsRepository
+    private lateinit var networkManager: NetworkManager
 
     private val defaultSettings = TimerSettings(
         warmupMinutes = 5,
@@ -33,9 +36,11 @@ class SettingsViewModelTest {
     @Before
     fun setup() {
         settingsRepository = mockk(relaxed = true)
+        networkManager = mockk(relaxed = true)
         every { settingsRepository.getSettings() } returns flowOf(defaultSettings)
+        every { networkManager.isConnectedToWebApp } returns MutableStateFlow(false)
         
-        viewModel = SettingsViewModel(settingsRepository)
+        viewModel = SettingsViewModel(settingsRepository, networkManager)
     }
 
     @Test
@@ -61,7 +66,7 @@ class SettingsViewModelTest {
         every { settingsRepository.getSettings() } returns 
             flowOf(defaultSettings.copy(warmupMinutes = 30))
         
-        val maxViewModel = SettingsViewModel(settingsRepository)
+        val maxViewModel = SettingsViewModel(settingsRepository, networkManager)
         maxViewModel.increaseWarmupTime()
         
         // Should stay at 30, not increase
@@ -81,7 +86,7 @@ class SettingsViewModelTest {
         every { settingsRepository.getSettings() } returns 
             flowOf(defaultSettings.copy(warmupMinutes = 1))
         
-        val minViewModel = SettingsViewModel(settingsRepository)
+        val minViewModel = SettingsViewModel(settingsRepository, networkManager)
         minViewModel.decreaseWarmupTime()
         
         // Should stay at 1, not decrease
@@ -101,7 +106,7 @@ class SettingsViewModelTest {
         every { settingsRepository.getSettings() } returns 
             flowOf(defaultSettings.copy(matchMinutes = 180))
         
-        val maxViewModel = SettingsViewModel(settingsRepository)
+        val maxViewModel = SettingsViewModel(settingsRepository, networkManager)
         maxViewModel.increaseMatchTime()
         
         // Should stay at 180, not increase
@@ -121,7 +126,7 @@ class SettingsViewModelTest {
         every { settingsRepository.getSettings() } returns 
             flowOf(defaultSettings.copy(matchMinutes = 1))
         
-        val minViewModel = SettingsViewModel(settingsRepository)
+        val minViewModel = SettingsViewModel(settingsRepository, networkManager)
         minViewModel.decreaseMatchTime()
         
         // Should stay at 1, not decrease
@@ -141,7 +146,7 @@ class SettingsViewModelTest {
         every { settingsRepository.getSettings() } returns 
             flowOf(defaultSettings.copy(breakMinutes = 30))
         
-        val maxViewModel = SettingsViewModel(settingsRepository)
+        val maxViewModel = SettingsViewModel(settingsRepository, networkManager)
         maxViewModel.increaseBreakTime()
         
         // Should stay at 30, not increase
@@ -161,7 +166,7 @@ class SettingsViewModelTest {
         every { settingsRepository.getSettings() } returns 
             flowOf(defaultSettings.copy(breakMinutes = 1))
         
-        val minViewModel = SettingsViewModel(settingsRepository)
+        val minViewModel = SettingsViewModel(settingsRepository, networkManager)
         minViewModel.decreaseBreakTime()
         
         // Should stay at 1, not decrease
