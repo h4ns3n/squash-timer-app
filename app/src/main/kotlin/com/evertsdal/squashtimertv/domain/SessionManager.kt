@@ -103,12 +103,17 @@ class SessionManager @Inject constructor(
     
     /**
      * Check if a controller is authorized to send commands
+     * Returns true if:
+     * - No active session exists (open access)
+     * - Session exists but is not protected (open access)
+     * - Session is protected and controller is authorized
      */
     suspend fun isAuthorized(controllerId: String): Boolean {
         val currentSession = sessionRepository.getSessionState().first()
         
+        // No active session = open access (anyone can control)
         if (!currentSession.isActive) {
-            return false
+            return true
         }
         
         return currentSession.isAuthorized(controllerId)
