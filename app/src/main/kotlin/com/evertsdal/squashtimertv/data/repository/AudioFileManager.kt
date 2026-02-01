@@ -109,10 +109,10 @@ class AudioFileManager @Inject constructor(
             return ValidationResult.Error("File does not appear to be a valid MP3")
         }
         
-        // Check file size (max 5MB)
-        val maxSize = 5 * 1024 * 1024
+        // Check file size (max 10MB)
+        val maxSize = 10 * 1024 * 1024
         if (data.size > maxSize) {
-            return ValidationResult.Error("File too large (max 5MB)")
+            return ValidationResult.Error("File too large (max 10MB)")
         }
         
         return ValidationResult.Valid

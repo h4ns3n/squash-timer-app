@@ -272,7 +272,7 @@ export function SettingsEditor() {
               <h3 className="text-lg font-semibold text-gray-800">Sound Notifications</h3>
             </div>
             <p className="text-sm text-gray-600 mb-4">
-              Upload MP3 files (max 20 seconds) that will play at the end of warmup/break and match phases.
+              Upload MP3 files (max 10MB) that will play at the end of warmup/break and match phases.
             </p>
 
             {/* Audio Messages */}

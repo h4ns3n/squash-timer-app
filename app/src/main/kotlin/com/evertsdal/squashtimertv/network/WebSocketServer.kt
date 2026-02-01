@@ -366,16 +366,6 @@ class WebSocketServer @Inject constructor(
             // Get audio duration
             val durationSeconds = audioFileManager.getAudioDuration(filePath)
             
-            // Validate duration (max 20 seconds)
-            if (durationSeconds > 20) {
-                audioFileManager.deleteAudioFile(audioType)
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    AudioUploadResponse(false, "Audio file too long. Maximum duration is 20 seconds (got ${durationSeconds}s)")
-                )
-                return
-            }
-            
             // Notify handler to update settings
             audioUploadHandler?.invoke(audioType, filePath, durationSeconds)
             

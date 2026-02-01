@@ -11,8 +11,7 @@ export interface AudioUploadResult {
   durationSeconds?: number
 }
 
-const MAX_DURATION_SECONDS = 20
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024 // 5MB
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024 // 10MB
 
 export class AudioUploadService {
   /**
@@ -27,21 +26,12 @@ export class AudioUploadService {
 
     // Check file size
     if (file.size > MAX_FILE_SIZE_BYTES) {
-      return { valid: false, error: 'File too large. Maximum size is 5MB' }
+      return { valid: false, error: 'File too large. Maximum size is 10MB' }
     }
 
     // Get audio duration using Web Audio API
     try {
       const duration = await this.getAudioDuration(file)
-      
-      if (duration > MAX_DURATION_SECONDS) {
-        return { 
-          valid: false, 
-          error: `Audio too long. Maximum duration is ${MAX_DURATION_SECONDS} seconds (got ${Math.round(duration)}s)`,
-          duration 
-        }
-      }
-
       return { valid: true, duration }
     } catch (error) {
       console.error('Failed to get audio duration:', error)
