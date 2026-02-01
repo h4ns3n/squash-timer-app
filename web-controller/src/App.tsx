@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useAppStore } from './store/useAppStore'
 import { DeviceList } from './components/DeviceList'
 import { TimerControl } from './components/TimerControl'
+import { SettingsEditor } from './components/SettingsEditor'
 import { Wifi } from 'lucide-react'
 
 function App() {
@@ -43,7 +44,10 @@ function App() {
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <DeviceList />
-          <TimerControl />
+          <div className="space-y-6">
+            <TimerControl />
+            <SettingsEditor />
+          </div>
         </div>
 
         {/* Footer */}

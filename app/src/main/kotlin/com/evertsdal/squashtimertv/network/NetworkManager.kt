@@ -140,6 +140,9 @@ class NetworkManager @Inject constructor(
                     "GET_SETTINGS" -> {
                         handleGetSettingsCommand(message)
                     }
+                    "UPDATE_SETTINGS" -> {
+                        handleUpdateSettingsCommand(message)
+                    }
                     "SYNC_SETTINGS" -> {
                         handleSyncSettingsCommand(message)
                     }
@@ -247,6 +250,90 @@ class NetworkManager @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "Error handling get settings command")
             sendCommandError(message.commandId, "ERROR", e.message ?: "Unknown error")
+        }
+    }
+    
+    /**
+     * Handle UPDATE_SETTINGS command - updates this device's settings
+     */
+    private suspend fun handleUpdateSettingsCommand(message: WebSocketMessage) {
+        try {
+            val payload = message.payload as? JsonObject
+            if (payload == null) {
+                sendCommandError(message.commandId, "INVALID_PAYLOAD", "Missing settings payload")
+                return
+            }
+            
+            val warmupMinutes = payload["warmupMinutes"]?.jsonPrimitive?.intOrNull
+            val matchMinutes = payload["matchMinutes"]?.jsonPrimitive?.intOrNull
+            val breakMinutes = payload["breakMinutes"]?.jsonPrimitive?.intOrNull
+            val timerFontSize = payload["timerFontSize"]?.jsonPrimitive?.intOrNull
+            val messageFontSize = payload["messageFontSize"]?.jsonPrimitive?.intOrNull
+            val timerColor = payload["timerColor"]?.jsonPrimitive?.longOrNull
+            val messageColor = payload["messageColor"]?.jsonPrimitive?.longOrNull
+            val startSoundDurationSeconds = payload["startSoundDurationSeconds"]?.jsonPrimitive?.intOrNull
+            val endSoundDurationSeconds = payload["endSoundDurationSeconds"]?.jsonPrimitive?.intOrNull
+            
+            // Validate settings
+            if (warmupMinutes != null && (warmupMinutes < 1 || warmupMinutes > 30)) {
+                sendCommandError(message.commandId, "INVALID_VALUE", "Warmup must be 1-30 minutes")
+                return
+            }
+            if (matchMinutes != null && (matchMinutes < 1 || matchMinutes > 180)) {
+                sendCommandError(message.commandId, "INVALID_VALUE", "Match must be 1-180 minutes")
+                return
+            }
+            if (breakMinutes != null && (breakMinutes < 1 || breakMinutes > 30)) {
+                sendCommandError(message.commandId, "INVALID_VALUE", "Break must be 1-30 minutes")
+                return
+            }
+            
+            // Get current settings and update with received values
+            val currentSettings = settingsGetter?.invoke() ?: TimerSettings()
+            val newSettings = currentSettings.copy(
+                warmupMinutes = warmupMinutes ?: currentSettings.warmupMinutes,
+                matchMinutes = matchMinutes ?: currentSettings.matchMinutes,
+                breakMinutes = breakMinutes ?: currentSettings.breakMinutes,
+                timerFontSize = timerFontSize ?: currentSettings.timerFontSize,
+                messageFontSize = messageFontSize ?: currentSettings.messageFontSize,
+                timerColor = timerColor ?: currentSettings.timerColor,
+                messageColor = messageColor ?: currentSettings.messageColor,
+                startSoundDurationSeconds = startSoundDurationSeconds ?: currentSettings.startSoundDurationSeconds,
+                endSoundDurationSeconds = endSoundDurationSeconds ?: currentSettings.endSoundDurationSeconds
+            )
+            
+            // Apply the updated settings
+            settingsSetter?.invoke(newSettings)
+            Timber.d("Settings updated: warmup=${newSettings.warmupMinutes}, match=${newSettings.matchMinutes}, break=${newSettings.breakMinutes}")
+            
+            // Send acknowledgment
+            sendCommandAck(message.commandId, "success", "Settings updated")
+            
+            // Broadcast updated settings to all connected clients
+            val settingsPayload = buildJsonObject {
+                put("warmupMinutes", newSettings.warmupMinutes)
+                put("matchMinutes", newSettings.matchMinutes)
+                put("breakMinutes", newSettings.breakMinutes)
+                put("timerFontSize", newSettings.timerFontSize)
+                put("messageFontSize", newSettings.messageFontSize)
+                put("timerColor", newSettings.timerColor)
+                put("messageColor", newSettings.messageColor)
+                newSettings.startSoundUri?.let { uri -> put("startSoundUri", uri) }
+                newSettings.endSoundUri?.let { uri -> put("endSoundUri", uri) }
+                put("startSoundDurationSeconds", newSettings.startSoundDurationSeconds)
+                put("endSoundDurationSeconds", newSettings.endSoundDurationSeconds)
+            }
+            
+            val responseMessage = WebSocketMessage(
+                type = "SETTINGS_RESPONSE",
+                commandId = message.commandId,
+                timestamp = System.currentTimeMillis(),
+                payload = settingsPayload
+            )
+            webSocketServer.broadcast(json.encodeToString(responseMessage))
+        } catch (e: Exception) {
+            Timber.e(e, "Error handling update settings command")
+            sendCommandError(message.commandId, "INVALID_PAYLOAD", "Invalid settings payload")
         }
     }
     

@@ -27,6 +27,7 @@ interface AppState {
   disconnectFromDevice: (deviceId: string) => void
   disconnectAll: () => void
   setMasterDevice: (deviceId: string) => void
+  updateMasterSettings: (settings: TimerSettings) => Promise<void>
   syncSettingsFromMaster: () => void
   setSyncMode: (mode: SyncMode) => void
   sendCommand: (command: any) => void
@@ -151,6 +152,17 @@ export const useAppStore = create<AppState>((set, get) => {
       const { wsService } = get()
       wsService.setMasterDevice(deviceId)
       set({ masterDeviceId: deviceId, isSyncing: true })
+    },
+
+    updateMasterSettings: async (settings: TimerSettings) => {
+      const { wsService } = get()
+      try {
+        set({ error: null })
+        await wsService.updateMasterSettings(settings)
+      } catch (error) {
+        set({ error: error instanceof Error ? error.message : 'Failed to update settings' })
+        throw error
+      }
     },
 
     syncSettingsFromMaster: () => {

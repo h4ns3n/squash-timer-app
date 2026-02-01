@@ -56,5 +56,6 @@ export type RemoteCommand =
   | { type: 'SET_SYNC_MODE'; mode: SyncMode; controllerId?: string }
   | { type: 'SET_EMERGENCY_TIME'; minutes: number; seconds: number }
   | { type: 'GET_SETTINGS' }
+  | { type: 'UPDATE_SETTINGS'; settings: TimerSettings }
   | { type: 'SYNC_SETTINGS'; settings: TimerSettings }
   | { type: 'SYNC_TIMER_STATE'; phase: string; timeLeftSeconds: number; isRunning: boolean }
