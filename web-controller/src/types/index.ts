@@ -9,6 +9,21 @@ export enum SyncMode {
   CENTRALIZED = 'CENTRALIZED'
 }
 
+export interface SessionState {
+  sessionId: string
+  isActive: boolean
+  isProtected: boolean
+  createdAt: number
+  authorizedCount: number
+  owner?: string
+}
+
+export interface AuthStatus {
+  isAuthorized: boolean
+  controllerId: string
+  sessionId?: string
+}
+
 export interface TimerState {
   phase: TimerPhase
   timeLeftSeconds: number
@@ -59,3 +74,7 @@ export type RemoteCommand =
   | { type: 'UPDATE_SETTINGS'; settings: TimerSettings }
   | { type: 'SYNC_SETTINGS'; settings: TimerSettings }
   | { type: 'SYNC_TIMER_STATE'; phase: string; timeLeftSeconds: number; isRunning: boolean }
+  | { type: 'CREATE_SESSION'; password?: string; owner?: string }
+  | { type: 'AUTH_REQUEST'; controllerId: string; password: string }
+  | { type: 'END_SESSION' }
+  | { type: 'GET_SESSION_STATUS' }

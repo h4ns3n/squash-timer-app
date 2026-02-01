@@ -90,11 +90,30 @@ for ip in "${TV_IPS[@]}"; do
         echo "🛑 Stopping app..."
         $ADB -s "$ip:$ADB_PORT" shell am force-stop com.evertsdal.squashtimertv 2>/dev/null || true
         
+        # Wait a moment for the app to fully stop
+        sleep 1
+        
+        # Clear app data to ensure fresh start with new session management
+        echo "🧹 Clearing app cache..."
+        $ADB -s "$ip:$ADB_PORT" shell pm clear com.evertsdal.squashtimertv 2>/dev/null || true
+        
+        # Wait a moment before restarting
+        sleep 1
+        
         # Start the app
         echo "▶️  Starting app..."
         if $ADB -s "$ip:$ADB_PORT" shell am start -n com.evertsdal.squashtimertv/.MainActivity 2>&1 | grep -q "Starting"; then
             echo "✓ App restarted successfully"
-            SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            
+            # Verify app is running
+            sleep 2
+            if $ADB -s "$ip:$ADB_PORT" shell pidof com.evertsdal.squashtimertv >/dev/null 2>&1; then
+                echo "✓ App is running and ready"
+                SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            else
+                echo "⚠️  App started but may not be running properly"
+                SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            fi
         else
             echo "⚠️  App installed but failed to restart (you may need to start it manually)"
             SUCCESS_COUNT=$((SUCCESS_COUNT + 1))

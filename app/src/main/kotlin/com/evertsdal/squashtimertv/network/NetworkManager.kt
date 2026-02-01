@@ -1,6 +1,7 @@
 package com.evertsdal.squashtimertv.network
 
 import com.evertsdal.squashtimertv.di.IoDispatcher
+import com.evertsdal.squashtimertv.domain.SessionManager
 import com.evertsdal.squashtimertv.domain.model.TimerSettings
 import com.evertsdal.squashtimertv.domain.model.TimerState
 import com.evertsdal.squashtimertv.network.models.RemoteCommand
@@ -36,6 +37,7 @@ import javax.inject.Singleton
 class NetworkManager @Inject constructor(
     private val webSocketServer: WebSocketServer,
     private val nsdService: NSDService,
+    private val sessionManager: SessionManager,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
@@ -110,27 +112,60 @@ class NetworkManager @Inject constructor(
     private fun handleIncomingMessage(message: WebSocketMessage) {
         scope.launch {
             try {
+                // Extract controller ID from message
+                val controllerId = message.deviceId ?: "unknown"
+                
                 when (message.type) {
+                    // Session management commands (no auth required)
+                    "CREATE_SESSION" -> {
+                        handleCreateSessionCommand(message)
+                    }
+                    "AUTH_REQUEST" -> {
+                        handleAuthRequestCommand(message)
+                    }
+                    "END_SESSION" -> {
+                        handleEndSessionCommand(message)
+                    }
+                    "GET_SESSION_STATUS" -> {
+                        handleGetSessionStatusCommand(message)
+                    }
+                    
+                    // Protected commands (require authorization)
                     "START_TIMER" -> {
-                        Timber.d("Received START_TIMER command")
-                        commandHandler?.invoke(RemoteCommand.Start)
-                        sendCommandAck(message.commandId, "success", "Timer started")
+                        if (checkAuthorization(controllerId, message.commandId)) {
+                            Timber.d("Received START_TIMER command")
+                            commandHandler?.invoke(RemoteCommand.Start)
+                            sendCommandAck(message.commandId, "success", "Timer started")
+                        }
                     }
                     "PAUSE_TIMER" -> {
-                        Timber.d("Received PAUSE_TIMER command")
-                        commandHandler?.invoke(RemoteCommand.Pause)
-                        sendCommandAck(message.commandId, "success", "Timer paused")
+                        if (checkAuthorization(controllerId, message.commandId)) {
+                            Timber.d("Received PAUSE_TIMER command")
+                            commandHandler?.invoke(RemoteCommand.Pause)
+                            sendCommandAck(message.commandId, "success", "Timer paused")
+                        }
                     }
                     "RESUME_TIMER" -> {
-                        Timber.d("Received RESUME_TIMER command")
-                        commandHandler?.invoke(RemoteCommand.Resume)
-                        sendCommandAck(message.commandId, "success", "Timer resumed")
+                        if (checkAuthorization(controllerId, message.commandId)) {
+                            Timber.d("Received RESUME_TIMER command")
+                            commandHandler?.invoke(RemoteCommand.Resume)
+                            sendCommandAck(message.commandId, "success", "Timer resumed")
+                        }
                     }
                     "RESTART_TIMER" -> {
-                        Timber.d("Received RESTART_TIMER command")
-                        commandHandler?.invoke(RemoteCommand.Restart)
-                        sendCommandAck(message.commandId, "success", "Timer restarted")
+                        if (checkAuthorization(controllerId, message.commandId)) {
+                            Timber.d("Received RESTART_TIMER command")
+                            commandHandler?.invoke(RemoteCommand.Restart)
+                            sendCommandAck(message.commandId, "success", "Timer restarted")
+                        }
                     }
+                    "UPDATE_SETTINGS" -> {
+                        if (checkAuthorization(controllerId, message.commandId)) {
+                            handleUpdateSettingsCommand(message)
+                        }
+                    }
+                    
+                    // Unprotected commands
                     "SET_SYNC_MODE" -> {
                         handleSyncModeCommand(message)
                     }
@@ -139,9 +174,6 @@ class NetworkManager @Inject constructor(
                     }
                     "GET_SETTINGS" -> {
                         handleGetSettingsCommand(message)
-                    }
-                    "UPDATE_SETTINGS" -> {
-                        handleUpdateSettingsCommand(message)
                     }
                     "SYNC_SETTINGS" -> {
                         handleSyncSettingsCommand(message)
@@ -156,6 +188,157 @@ class NetworkManager @Inject constructor(
                 sendCommandError(message.commandId, "PROCESSING_ERROR", e.message ?: "Unknown error")
             }
         }
+    }
+    
+    /**
+     * Check if a controller is authorized to execute protected commands
+     */
+    private suspend fun checkAuthorization(controllerId: String, commandId: String?): Boolean {
+        val isAuthorized = sessionManager.isAuthorized(controllerId)
+        
+        if (!isAuthorized) {
+            Timber.w("Unauthorized command attempt from: $controllerId")
+            sendCommandError(
+                commandId,
+                "UNAUTHORIZED",
+                "Session is protected. Please authenticate first."
+            )
+        }
+        
+        return isAuthorized
+    }
+    
+    /**
+     * Handle CREATE_SESSION command
+     */
+    private suspend fun handleCreateSessionCommand(message: WebSocketMessage) {
+        try {
+            val payload = message.payload as? JsonObject
+            val password = payload?.get("password")?.jsonPrimitive?.content
+            val owner = payload?.get("owner")?.jsonPrimitive?.content
+            
+            val result = sessionManager.createSession(password, owner)
+            
+            result.onSuccess { sessionState ->
+                sendCommandAck(message.commandId, "success", "Session created")
+                broadcastSessionStatus(sessionState)
+            }.onFailure { error ->
+                sendCommandError(message.commandId, "SESSION_ERROR", error.message ?: "Failed to create session")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error handling create session command")
+            sendCommandError(message.commandId, "INVALID_PAYLOAD", "Invalid session creation payload")
+        }
+    }
+    
+    /**
+     * Handle AUTH_REQUEST command
+     */
+    private suspend fun handleAuthRequestCommand(message: WebSocketMessage) {
+        try {
+            val payload = message.payload as? JsonObject
+            val controllerId = payload?.get("controllerId")?.jsonPrimitive?.content
+            val password = payload?.get("password")?.jsonPrimitive?.content
+            
+            if (controllerId == null || password == null) {
+                sendCommandError(message.commandId, "INVALID_PAYLOAD", "Missing controllerId or password")
+                return
+            }
+            
+            val result = sessionManager.authenticateController(controllerId, password)
+            
+            result.onSuccess { sessionState ->
+                val responsePayload = buildJsonObject {
+                    put("authorized", true)
+                    put("controllerId", controllerId)
+                    put("sessionId", sessionState.sessionId)
+                }
+                
+                val responseMessage = WebSocketMessage(
+                    type = "AUTH_RESPONSE",
+                    commandId = message.commandId,
+                    timestamp = System.currentTimeMillis(),
+                    payload = responsePayload
+                )
+                webSocketServer.broadcast(json.encodeToString(responseMessage))
+                Timber.i("Controller authenticated: $controllerId")
+            }.onFailure { error ->
+                val responsePayload = buildJsonObject {
+                    put("authorized", false)
+                    put("controllerId", controllerId)
+                    put("error", error.message ?: "Authentication failed")
+                }
+                
+                val responseMessage = WebSocketMessage(
+                    type = "AUTH_RESPONSE",
+                    commandId = message.commandId,
+                    timestamp = System.currentTimeMillis(),
+                    payload = responsePayload
+                )
+                webSocketServer.broadcast(json.encodeToString(responseMessage))
+                Timber.w("Authentication failed for: $controllerId - ${error.message}")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error handling auth request command")
+            sendCommandError(message.commandId, "INVALID_PAYLOAD", "Invalid auth request payload")
+        }
+    }
+    
+    /**
+     * Handle END_SESSION command
+     */
+    private suspend fun handleEndSessionCommand(message: WebSocketMessage) {
+        try {
+            val result = sessionManager.endSession()
+            
+            result.onSuccess {
+                sendCommandAck(message.commandId, "success", "Session ended")
+                broadcastSessionStatus(com.evertsdal.squashtimertv.domain.model.SessionState.inactive())
+            }.onFailure { error ->
+                sendCommandError(message.commandId, "SESSION_ERROR", error.message ?: "Failed to end session")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error handling end session command")
+            sendCommandError(message.commandId, "INVALID_PAYLOAD", "Invalid end session request")
+        }
+    }
+    
+    /**
+     * Handle GET_SESSION_STATUS command
+     */
+    private suspend fun handleGetSessionStatusCommand(message: WebSocketMessage) {
+        try {
+            sessionManager.getSessionState().collect { sessionState ->
+                broadcastSessionStatus(sessionState)
+                return@collect
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error handling get session status command")
+            sendCommandError(message.commandId, "ERROR", "Failed to get session status")
+        }
+    }
+    
+    /**
+     * Broadcast session status to all connected clients
+     */
+    private suspend fun broadcastSessionStatus(sessionState: com.evertsdal.squashtimertv.domain.model.SessionState) {
+        val payload = buildJsonObject {
+            put("sessionId", sessionState.sessionId)
+            put("isActive", sessionState.isActive)
+            put("isProtected", sessionState.isProtected)
+            put("createdAt", sessionState.createdAt)
+            put("authorizedCount", sessionState.authorizedControllers.size)
+            sessionState.sessionOwner?.let { put("owner", it) }
+        }
+        
+        val message = WebSocketMessage(
+            type = "SESSION_STATUS",
+            timestamp = System.currentTimeMillis(),
+            deviceId = nsdService.getDeviceId(),
+            payload = payload
+        )
+        
+        webSocketServer.broadcast(json.encodeToString(message))
     }
     
     /**

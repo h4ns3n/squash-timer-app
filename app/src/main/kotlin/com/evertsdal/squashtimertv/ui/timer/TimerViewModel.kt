@@ -280,6 +280,18 @@ class TimerViewModel @Inject constructor(
             is RemoteCommand.SyncState -> {
                 syncToState(command.phase, command.timeLeftSeconds, command.isRunning)
             }
+            is RemoteCommand.CreateSession -> {
+                // Session creation handled by NetworkManager
+                Timber.d("Session creation command received (handled by NetworkManager)")
+            }
+            is RemoteCommand.AuthenticateController -> {
+                // Authentication handled by NetworkManager
+                Timber.d("Authentication command received (handled by NetworkManager)")
+            }
+            is RemoteCommand.EndSession -> {
+                // Session end handled by NetworkManager
+                Timber.d("End session command received (handled by NetworkManager)")
+            }
         }
     }
     

@@ -38,4 +38,19 @@ sealed class RemoteCommand {
         val timeLeftSeconds: Int,
         val isRunning: Boolean
     ) : RemoteCommand()
+    
+    @Serializable
+    data class CreateSession(
+        val password: String?,
+        val owner: String?
+    ) : RemoteCommand()
+    
+    @Serializable
+    data class AuthenticateController(
+        val controllerId: String,
+        val password: String
+    ) : RemoteCommand()
+    
+    @Serializable
+    object EndSession : RemoteCommand()
 }

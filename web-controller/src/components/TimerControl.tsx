@@ -3,7 +3,11 @@ import { useAppStore } from '../store/useAppStore'
 import { TimerPhase } from '../types'
 
 export function TimerControl() {
-  const { timerState, connectedDeviceIds, sendCommand } = useAppStore()
+  const { 
+    timerState, 
+    connectedDeviceIds, 
+    sendCommand
+  } = useAppStore()
 
   if (connectedDeviceIds.length === 0) {
     return (
@@ -56,7 +60,7 @@ export function TimerControl() {
   }
 
   const handleStart = () => {
-    if (timerState.isPaused) {
+    if (timerState?.isPaused) {
       sendCommand({ type: 'RESUME_TIMER' })
     } else {
       sendCommand({ type: 'START_TIMER' })

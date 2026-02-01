@@ -1,4 +1,4 @@
-import { WebSocketMessage, TimerState, TimerSettings } from '../types'
+import { WebSocketMessage, TimerState, TimerSettings, SessionState, AuthStatus } from '../types'
 
 interface DeviceConnection {
   deviceId: string
@@ -12,12 +12,17 @@ export class WebSocketService {
   private masterDeviceId: string | null = null  // User-selected master device for settings sync
   private lastKnownState: TimerState | null = null  // Last known timer state from master device
   private lastKnownSettings: TimerSettings | null = null  // Last known settings from master device
+  private sessionState: SessionState | null = null  // Current session state
+  private authStatus: Map<string, AuthStatus> = new Map()  // Auth status per device
+  private controllerId: string = this.generateControllerId()  // Unique controller ID for this browser
   private maxReconnectAttempts = 5
   private reconnectDelay = 2000
   private messageHandlers: ((message: WebSocketMessage, deviceId: string) => void)[] = []
   private stateHandlers: ((state: TimerState) => void)[] = []
   private settingsHandlers: ((settings: TimerSettings) => void)[] = []
   private connectionHandlers: ((deviceId: string, connected: boolean) => void)[] = []
+  private sessionHandlers: ((session: SessionState) => void)[] = []
+  private authHandlers: ((deviceId: string, auth: AuthStatus) => void)[] = []
 
   connectDevice(deviceId: string, url: string): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -125,6 +130,34 @@ export class WebSocketService {
         this.notifySettingsHandlers(settings)
       }
     }
+    
+    // Handle session status updates
+    if (message.type === 'SESSION_STATUS' && message.payload) {
+      const session: SessionState = {
+        sessionId: message.payload.sessionId,
+        isActive: message.payload.isActive,
+        isProtected: message.payload.isProtected,
+        createdAt: message.payload.createdAt,
+        authorizedCount: message.payload.authorizedCount,
+        owner: message.payload.owner
+      }
+      this.sessionState = session
+      this.notifySessionHandlers(session)
+    }
+    
+    // Handle authentication responses
+    if (message.type === 'AUTH_RESPONSE' && message.payload) {
+      const auth: AuthStatus = {
+        isAuthorized: message.payload.authorized,
+        controllerId: message.payload.controllerId,
+        sessionId: message.payload.sessionId
+      }
+      
+      if (auth.controllerId === this.controllerId) {
+        this.authStatus.set(deviceId, auth)
+        this.notifyAuthHandlers(deviceId, auth)
+      }
+    }
   }
 
   private attemptReconnect(deviceId: string, url: string, currentAttempts: number) {
@@ -228,6 +261,20 @@ export class WebSocketService {
     }
   }
 
+  onSessionUpdate(handler: (session: SessionState) => void): () => void {
+    this.sessionHandlers.push(handler)
+    return () => {
+      this.sessionHandlers = this.sessionHandlers.filter(h => h !== handler)
+    }
+  }
+
+  onAuthUpdate(handler: (deviceId: string, auth: AuthStatus) => void): () => void {
+    this.authHandlers.push(handler)
+    return () => {
+      this.authHandlers = this.authHandlers.filter(h => h !== handler)
+    }
+  }
+
   private notifyStateHandlers(state: TimerState) {
     this.stateHandlers.forEach(handler => handler(state))
   }
@@ -238,6 +285,14 @@ export class WebSocketService {
 
   private notifyConnectionHandlers(deviceId: string, connected: boolean) {
     this.connectionHandlers.forEach(handler => handler(deviceId, connected))
+  }
+
+  private notifySessionHandlers(session: SessionState) {
+    this.sessionHandlers.forEach(handler => handler(session))
+  }
+
+  private notifyAuthHandlers(deviceId: string, auth: AuthStatus) {
+    this.authHandlers.forEach(handler => handler(deviceId, auth))
   }
 
   // Master device selection and settings sync methods
@@ -355,5 +410,69 @@ export class WebSocketService {
 
   getConnectionCount(): number {
     return this.getConnectedDevices().length
+  }
+
+  // Session management methods
+  getControllerId(): string {
+    return this.controllerId
+  }
+
+  private generateControllerId(): string {
+    // Try to get from localStorage first
+    const stored = localStorage.getItem('squash-timer-controller-id')
+    if (stored) {
+      return stored
+    }
+    
+    // Generate new ID
+    const id = this.generateUUID()
+    localStorage.setItem('squash-timer-controller-id', id)
+    return id
+  }
+
+  createSession(password?: string, owner?: string): void {
+    this.sendCommand({
+      type: 'CREATE_SESSION',
+      password,
+      owner
+    })
+  }
+
+  authenticateController(password: string): void {
+    this.sendCommand({
+      type: 'AUTH_REQUEST',
+      controllerId: this.controllerId,
+      password
+    })
+  }
+
+  endSession(): void {
+    this.sendCommand({
+      type: 'END_SESSION'
+    })
+  }
+
+  requestSessionStatus(): void {
+    this.sendCommand({
+      type: 'GET_SESSION_STATUS'
+    })
+  }
+
+  getSessionState(): SessionState | null {
+    return this.sessionState
+  }
+
+  isAuthorized(deviceId?: string): boolean {
+    if (!this.sessionState?.isProtected) {
+      return true
+    }
+    
+    const targetDeviceId = deviceId || this.masterDeviceId
+    if (!targetDeviceId) {
+      return false
+    }
+    
+    const auth = this.authStatus.get(targetDeviceId)
+    return auth?.isAuthorized ?? false
   }
 }

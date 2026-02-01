@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Device, TimerState, SyncMode, TimerSettings } from '../types'
+import { Device, TimerState, SyncMode, TimerSettings, SessionState, AuthStatus } from '../types'
 import { WebSocketService } from '../services/WebSocketService'
 import { DeviceDiscoveryService } from '../services/DeviceDiscoveryService'
 
@@ -15,6 +15,8 @@ interface AppState {
   syncMode: SyncMode
   timerState: TimerState | null
   masterSettings: TimerSettings | null
+  sessionState: SessionState | null
+  authStatus: Map<string, AuthStatus>
   isConnecting: boolean
   isSyncing: boolean
   error: string | null
@@ -32,6 +34,14 @@ interface AppState {
   setSyncMode: (mode: SyncMode) => void
   sendCommand: (command: any) => void
   clearError: () => void
+  
+  // Session actions
+  createSession: (password?: string, owner?: string) => void
+  authenticateController: (password: string) => void
+  endSession: () => void
+  requestSessionStatus: () => void
+  isAuthorized: () => boolean
+  getControllerId: () => string
 }
 
 export const useAppStore = create<AppState>((set, get) => {
@@ -53,6 +63,18 @@ export const useAppStore = create<AppState>((set, get) => {
     set({ masterSettings, isSyncing: false })
   })
   
+  // Subscribe to session updates
+  wsService.onSessionUpdate((sessionState) => {
+    set({ sessionState })
+  })
+  
+  // Subscribe to auth updates
+  wsService.onAuthUpdate((deviceId, auth) => {
+    const authStatus = new Map(get().authStatus)
+    authStatus.set(deviceId, auth)
+    set({ authStatus })
+  })
+  
   // Subscribe to connection changes for each device
   wsService.onConnectionChange((deviceId, connected) => {
     discoveryService.updateDeviceStatus(deviceId, connected)
@@ -70,6 +92,8 @@ export const useAppStore = create<AppState>((set, get) => {
     syncMode: SyncMode.INDEPENDENT,
     timerState: null,
     masterSettings: null,
+    sessionState: null,
+    authStatus: new Map(),
     isConnecting: false,
     isSyncing: false,
     error: null,
@@ -200,6 +224,36 @@ export const useAppStore = create<AppState>((set, get) => {
 
     clearError: () => {
       set({ error: null })
+    },
+
+    createSession: (password?: string, owner?: string) => {
+      const { wsService } = get()
+      wsService.createSession(password, owner)
+    },
+
+    authenticateController: (password: string) => {
+      const { wsService } = get()
+      wsService.authenticateController(password)
+    },
+
+    endSession: () => {
+      const { wsService } = get()
+      wsService.endSession()
+    },
+
+    requestSessionStatus: () => {
+      const { wsService } = get()
+      wsService.requestSessionStatus()
+    },
+
+    isAuthorized: () => {
+      const { wsService } = get()
+      return wsService.isAuthorized()
+    },
+
+    getControllerId: () => {
+      const { wsService } = get()
+      return wsService.getControllerId()
     }
   }
 })
