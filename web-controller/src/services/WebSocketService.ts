@@ -295,6 +295,27 @@ export class WebSocketService {
     }
   }
 
+  updateMasterSettings(settings: TimerSettings): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.masterDeviceId) {
+        reject(new Error('No master device connected'))
+        return
+      }
+
+      console.log(`Updating settings on master device: ${this.masterDeviceId}`)
+      this.sendCommandToDevice(this.masterDeviceId, {
+        type: 'UPDATE_SETTINGS',
+        ...settings
+      })
+
+      // Request updated settings from master to confirm
+      setTimeout(() => {
+        this.requestSettingsFromMaster()
+        resolve()
+      }, 500)
+    })
+  }
+
   getLastKnownSettings(): TimerSettings | null {
     return this.lastKnownSettings
   }
