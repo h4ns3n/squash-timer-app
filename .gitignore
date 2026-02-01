@@ -82,3 +82,6 @@ lint/tmp/
 
 # macOS
 .DS_Store
+
+# Packaging artifacts
+squash-timer-web*.tar.gz
