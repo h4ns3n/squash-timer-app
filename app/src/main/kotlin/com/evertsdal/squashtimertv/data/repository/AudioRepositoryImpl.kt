@@ -40,7 +40,7 @@ class AudioRepositoryImpl @Inject constructor(
                 if (startSoundPlayer == null) {
                     startSoundPlayer = MediaPlayer().apply {
                         try {
-                            setDataSource(context, Uri.parse(uri))
+                            setDataSourceFromPath(this, uri)
                             prepare()
                             setOnErrorListener { _, _, _ ->
                                 releaseStartSound()
@@ -61,6 +61,7 @@ class AudioRepositoryImpl @Inject constructor(
                 }
             }
         } catch (e: Exception) {
+            Timber.e(e, "Failed to play start sound: $uri")
             releaseStartSound()
         }
     }
@@ -73,7 +74,7 @@ class AudioRepositoryImpl @Inject constructor(
                 if (endSoundPlayer == null) {
                     endSoundPlayer = MediaPlayer().apply {
                         try {
-                            setDataSource(context, Uri.parse(uri))
+                            setDataSourceFromPath(this, uri)
                             prepare()
                             setOnErrorListener { _, _, _ ->
                                 releaseEndSound()
@@ -94,6 +95,7 @@ class AudioRepositoryImpl @Inject constructor(
                 }
             }
         } catch (e: Exception) {
+            Timber.e(e, "Failed to play end sound: $uri")
             releaseEndSound()
         }
     }
@@ -124,5 +126,15 @@ class AudioRepositoryImpl @Inject constructor(
     override fun release() {
         releaseStartSound()
         releaseEndSound()
+    }
+    
+    private fun setDataSourceFromPath(player: MediaPlayer, path: String) {
+        if (path.startsWith("/")) {
+            // It's a file path - use setDataSource directly
+            player.setDataSource(path)
+        } else {
+            // It's a URI (content:// or file://) - parse and use context
+            player.setDataSource(context, Uri.parse(path))
+        }
     }
 }

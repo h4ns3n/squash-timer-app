@@ -1,13 +1,20 @@
 package com.evertsdal.squashtimertv.network
 
 import android.content.Context
+import android.util.Base64
+import com.evertsdal.squashtimertv.data.repository.AudioFileManager
+import com.evertsdal.squashtimertv.data.repository.AudioType
 import com.evertsdal.squashtimertv.network.models.WebSocketMessage
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
@@ -19,6 +26,7 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.time.Duration
@@ -29,13 +37,31 @@ import javax.inject.Singleton
 /**
  * WebSocket server for receiving commands and broadcasting timer state
  */
+@Serializable
+data class AudioUploadRequest(
+    val audioType: String,
+    val fileName: String,
+    val fileData: String,
+    val durationSeconds: Int? = null
+)
+
+@Serializable
+data class AudioUploadResponse(
+    val success: Boolean,
+    val message: String,
+    val filePath: String? = null,
+    val durationSeconds: Int? = null
+)
+
 @Singleton
 class WebSocketServer @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val audioFileManager: AudioFileManager
 ) {
     private var server: ApplicationEngine? = null
     private val connections = ConcurrentHashMap<String, ConnectionInfo>()
     private var messageHandler: ((WebSocketMessage) -> Unit)? = null
+    private var audioUploadHandler: (suspend (AudioType, String, Int) -> Unit)? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     
     private val json = Json {
@@ -73,9 +99,25 @@ class WebSocketServer @Inject constructor(
                     json(json)
                 }
                 
+                install(CORS) {
+                    anyHost()
+                    allowMethod(HttpMethod.Post)
+                    allowMethod(HttpMethod.Options)
+                    allowHeader(HttpHeaders.ContentType)
+                    allowHeader(HttpHeaders.Accept)
+                }
+                
                 routing {
                     webSocket("/ws") {
                         handleWebSocketConnection(this)
+                    }
+                    
+                    post("/upload-audio") {
+                        handleAudioUpload(call)
+                    }
+                    
+                    delete("/delete-audio/{type}") {
+                        handleAudioDelete(call)
                     }
                 }
             }.start(wait = false)
@@ -255,6 +297,145 @@ class WebSocketServer @Inject constructor(
      */
     fun setMessageHandler(handler: (WebSocketMessage) -> Unit) {
         this.messageHandler = handler
+    }
+    
+    /**
+     * Set the audio upload handler for processing uploaded audio files
+     */
+    fun setAudioUploadHandler(handler: suspend (AudioType, String, Int) -> Unit) {
+        this.audioUploadHandler = handler
+    }
+    
+    /**
+     * Handle audio file upload via HTTP POST
+     */
+    private suspend fun handleAudioUpload(call: ApplicationCall) {
+        try {
+            val request = call.receive<AudioUploadRequest>()
+            Timber.d("Received audio upload request: type=${request.audioType}, fileName=${request.fileName}")
+            
+            // Parse audio type
+            val audioType = when (request.audioType.lowercase()) {
+                "start" -> AudioType.START
+                "end" -> AudioType.END
+                else -> {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        AudioUploadResponse(false, "Invalid audio type. Must be 'start' or 'end'")
+                    )
+                    return
+                }
+            }
+            
+            // Decode base64 file data
+            val fileData = try {
+                Base64.decode(request.fileData, Base64.DEFAULT)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to decode base64 audio data")
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    AudioUploadResponse(false, "Invalid base64 file data")
+                )
+                return
+            }
+            
+            // Validate the audio file
+            when (val validation = audioFileManager.validateAudioFile(fileData)) {
+                is AudioFileManager.ValidationResult.Error -> {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        AudioUploadResponse(false, validation.message)
+                    )
+                    return
+                }
+                AudioFileManager.ValidationResult.Valid -> { /* continue */ }
+            }
+            
+            // Save the file
+            val saveResult = audioFileManager.saveAudioFile(audioType, fileData)
+            if (saveResult.isFailure) {
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    AudioUploadResponse(false, "Failed to save audio file: ${saveResult.exceptionOrNull()?.message}")
+                )
+                return
+            }
+            
+            val filePath = saveResult.getOrThrow()
+            
+            // Get audio duration
+            val durationSeconds = audioFileManager.getAudioDuration(filePath)
+            
+            // Validate duration (max 20 seconds)
+            if (durationSeconds > 20) {
+                audioFileManager.deleteAudioFile(audioType)
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    AudioUploadResponse(false, "Audio file too long. Maximum duration is 20 seconds (got ${durationSeconds}s)")
+                )
+                return
+            }
+            
+            // Notify handler to update settings
+            audioUploadHandler?.invoke(audioType, filePath, durationSeconds)
+            
+            Timber.i("Audio file uploaded successfully: type=$audioType, path=$filePath, duration=${durationSeconds}s")
+            call.respond(
+                HttpStatusCode.OK,
+                AudioUploadResponse(
+                    success = true,
+                    message = "Audio file uploaded successfully",
+                    filePath = filePath,
+                    durationSeconds = durationSeconds
+                )
+            )
+        } catch (e: Exception) {
+            Timber.e(e, "Error handling audio upload")
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                AudioUploadResponse(false, "Internal server error: ${e.message}")
+            )
+        }
+    }
+    
+    /**
+     * Handle audio file deletion via HTTP DELETE
+     */
+    private suspend fun handleAudioDelete(call: ApplicationCall) {
+        try {
+            val typeParam = call.parameters["type"]
+            Timber.d("Received audio delete request: type=$typeParam")
+            
+            val audioType = when (typeParam?.lowercase()) {
+                "start" -> AudioType.START
+                "end" -> AudioType.END
+                else -> {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        AudioUploadResponse(false, "Invalid audio type. Must be 'start' or 'end'")
+                    )
+                    return
+                }
+            }
+            
+            // Delete the file
+            audioFileManager.deleteAudioFile(audioType)
+            
+            // Notify handler to clear settings
+            audioUploadHandler?.invoke(audioType, "", 0)
+            
+            Timber.i("Audio file deleted: type=$audioType")
+            call.respond(
+                HttpStatusCode.OK,
+                AudioUploadResponse(success = true, message = "Audio file deleted successfully")
+            )
+        } catch (e: Exception) {
+            Timber.e(e, "Error handling audio delete")
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                AudioUploadResponse(false, "Internal server error: ${e.message}")
+            )
+        }
     }
     
     /**

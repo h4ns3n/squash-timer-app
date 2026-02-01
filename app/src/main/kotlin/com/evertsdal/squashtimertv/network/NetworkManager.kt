@@ -1,5 +1,6 @@
 package com.evertsdal.squashtimertv.network
 
+import com.evertsdal.squashtimertv.data.repository.AudioType
 import com.evertsdal.squashtimertv.di.IoDispatcher
 import com.evertsdal.squashtimertv.domain.SessionManager
 import com.evertsdal.squashtimertv.domain.model.TimerSettings
@@ -79,6 +80,11 @@ class NetworkManager @Inject constructor(
             // Set up message handler
             webSocketServer.setMessageHandler { message ->
                 handleIncomingMessage(message)
+            }
+            
+            // Set up audio upload handler
+            webSocketServer.setAudioUploadHandler { audioType, filePath, durationSeconds ->
+                handleAudioUpload(audioType, filePath, durationSeconds)
             }
             
             // Monitor connection count to update connection state
@@ -637,6 +643,58 @@ class NetworkManager @Inject constructor(
         )
         
         webSocketServer.broadcast(json.encodeToString(errorMsg))
+    }
+    
+    /**
+     * Handle audio file upload - update settings with new sound URI and duration
+     */
+    private suspend fun handleAudioUpload(audioType: AudioType, filePath: String, durationSeconds: Int) {
+        val currentSettings = settingsGetter?.invoke() ?: return
+        
+        val newSettings = when (audioType) {
+            AudioType.START -> currentSettings.copy(
+                startSoundUri = filePath.ifEmpty { null },
+                startSoundDurationSeconds = durationSeconds
+            )
+            AudioType.END -> currentSettings.copy(
+                endSoundUri = filePath.ifEmpty { null },
+                endSoundDurationSeconds = durationSeconds
+            )
+        }
+        
+        settingsSetter?.invoke(newSettings)
+        Timber.d("Audio settings updated: type=$audioType, path=$filePath, duration=${durationSeconds}s")
+        
+        // Broadcast updated settings to all connected clients
+        scope.launch {
+            broadcastSettingsUpdate(newSettings)
+        }
+    }
+    
+    /**
+     * Broadcast settings update to all connected clients
+     */
+    private suspend fun broadcastSettingsUpdate(settings: TimerSettings) {
+        val settingsPayload = buildJsonObject {
+            put("warmupMinutes", settings.warmupMinutes)
+            put("matchMinutes", settings.matchMinutes)
+            put("breakMinutes", settings.breakMinutes)
+            put("timerFontSize", settings.timerFontSize)
+            put("messageFontSize", settings.messageFontSize)
+            put("timerColor", settings.timerColor)
+            put("messageColor", settings.messageColor)
+            settings.startSoundUri?.let { uri -> put("startSoundUri", uri) }
+            settings.endSoundUri?.let { uri -> put("endSoundUri", uri) }
+            put("startSoundDurationSeconds", settings.startSoundDurationSeconds)
+            put("endSoundDurationSeconds", settings.endSoundDurationSeconds)
+        }
+        
+        val responseMessage = WebSocketMessage(
+            type = "SETTINGS_RESPONSE",
+            timestamp = System.currentTimeMillis(),
+            payload = settingsPayload
+        )
+        webSocketServer.broadcast(json.encodeToString(responseMessage))
     }
     
     /**

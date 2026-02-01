@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { Device, TimerState, SyncMode, TimerSettings, SessionState, AuthStatus } from '../types'
 import { WebSocketService } from '../services/WebSocketService'
 import { DeviceDiscoveryService } from '../services/DeviceDiscoveryService'
+import { audioUploadService, AudioUploadResult } from '../services/AudioUploadService'
 
 interface AppState {
   // Services
@@ -42,6 +43,11 @@ interface AppState {
   requestSessionStatus: () => void
   isAuthorized: () => boolean
   getControllerId: () => string
+  
+  // Audio upload actions
+  uploadAudio: (file: File, audioType: 'start' | 'end', onProgress?: (progress: number) => void) => Promise<AudioUploadResult>
+  deleteAudio: (audioType: 'start' | 'end') => Promise<AudioUploadResult>
+  getMasterDeviceInfo: () => { ipAddress: string; port: number } | null
 }
 
 export const useAppStore = create<AppState>((set, get) => {
@@ -254,6 +260,61 @@ export const useAppStore = create<AppState>((set, get) => {
     getControllerId: () => {
       const { wsService } = get()
       return wsService.getControllerId()
+    },
+
+    uploadAudio: async (file: File, audioType: 'start' | 'end', onProgress?: (progress: number) => void) => {
+      const deviceInfo = get().getMasterDeviceInfo()
+      if (!deviceInfo) {
+        return { success: false, message: 'No master device connected' }
+      }
+
+      const result = await audioUploadService.uploadAudioToDevice(
+        deviceInfo.ipAddress,
+        deviceInfo.port,
+        file,
+        audioType,
+        onProgress
+      )
+
+      if (result.success) {
+        // Request updated settings from master to refresh UI
+        get().wsService.requestSettingsFromMaster()
+      }
+
+      return result
+    },
+
+    deleteAudio: async (audioType: 'start' | 'end') => {
+      const deviceInfo = get().getMasterDeviceInfo()
+      if (!deviceInfo) {
+        return { success: false, message: 'No master device connected' }
+      }
+
+      const result = await audioUploadService.deleteAudioFromDevice(
+        deviceInfo.ipAddress,
+        deviceInfo.port,
+        audioType
+      )
+
+      if (result.success) {
+        // Request updated settings from master to refresh UI
+        get().wsService.requestSettingsFromMaster()
+      }
+
+      return result
+    },
+
+    getMasterDeviceInfo: () => {
+      const { masterDeviceId, discoveryService } = get()
+      if (!masterDeviceId) return null
+      
+      const device = discoveryService.getDevice(masterDeviceId)
+      if (!device) return null
+      
+      return {
+        ipAddress: device.ipAddress,
+        port: device.port
+      }
     }
   }
 })
