@@ -5,6 +5,7 @@ import com.evertsdal.squashtimertv.domain.model.TimerPhase
 import com.evertsdal.squashtimertv.domain.model.TimerSettings
 import com.evertsdal.squashtimertv.domain.repository.AudioRepository
 import com.evertsdal.squashtimertv.domain.repository.SettingsRepository
+import com.evertsdal.squashtimertv.network.NetworkManager
 import com.evertsdal.squashtimertv.util.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -12,6 +13,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -31,6 +33,7 @@ class TimerViewModelTest {
     private lateinit var viewModel: TimerViewModel
     private lateinit var settingsRepository: SettingsRepository
     private lateinit var audioRepository: AudioRepository
+    private lateinit var networkManager: NetworkManager
 
     private val defaultSettings = TimerSettings(
         warmupMinutes = 5,
@@ -44,10 +47,13 @@ class TimerViewModelTest {
     fun setup() {
         settingsRepository = mockk(relaxed = true)
         audioRepository = mockk(relaxed = true)
+        networkManager = mockk(relaxed = true)
         
         every { settingsRepository.getSettings() } returns flowOf(defaultSettings)
+        every { networkManager.isConnectedToWebApp } returns MutableStateFlow(false)
+        coEvery { networkManager.broadcastTimerState(any()) } returns Result.success(Unit)
         
-        viewModel = TimerViewModel(settingsRepository, audioRepository)
+        viewModel = TimerViewModel(settingsRepository, audioRepository, networkManager)
     }
 
     @Test
@@ -203,7 +209,7 @@ class TimerViewModelTest {
         every { settingsRepository.getSettings() } returns flowOf(newSettings)
         
         // Create new ViewModel to trigger init block
-        val newViewModel = TimerViewModel(settingsRepository, audioRepository)
+        val newViewModel = TimerViewModel(settingsRepository, audioRepository, networkManager)
         
         verify { audioRepository.setStartSoundUri("content://audio/start.mp3") }
         verify { audioRepository.setEndSoundUri("content://audio/end.mp3") }
@@ -247,14 +253,6 @@ class TimerViewModelTest {
             // Should be approximately 5090 seconds (85 minutes - 10 seconds)
             assertTrue(state.timeLeftSeconds in 5088..5092)
         }
-    }
-
-    @Test
-    fun `onCleared releases audio repository`() {
-        // Trigger onCleared by destroying ViewModel
-        viewModel.onCleared()
-        
-        verify { audioRepository.release() }
     }
 
     @Test

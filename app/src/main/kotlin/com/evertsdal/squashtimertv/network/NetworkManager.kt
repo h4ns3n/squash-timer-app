@@ -10,6 +10,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -42,6 +45,9 @@ class NetworkManager @Inject constructor(
     private var settingsGetter: (() -> TimerSettings)? = null
     private var settingsSetter: ((TimerSettings) -> Unit)? = null
     
+    private val _isConnectedToWebApp = MutableStateFlow(false)
+    val isConnectedToWebApp: StateFlow<Boolean> = _isConnectedToWebApp.asStateFlow()
+    
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
@@ -71,6 +77,19 @@ class NetworkManager @Inject constructor(
             // Set up message handler
             webSocketServer.setMessageHandler { message ->
                 handleIncomingMessage(message)
+            }
+            
+            // Monitor connection count to update connection state
+            scope.launch {
+                while (true) {
+                    val connectionCount = webSocketServer.getConnectionCount()
+                    val isConnected = connectionCount > 0
+                    if (_isConnectedToWebApp.value != isConnected) {
+                        _isConnectedToWebApp.value = isConnected
+                        Timber.i("Web app connection state changed: $isConnected (connections: $connectionCount)")
+                    }
+                    kotlinx.coroutines.delay(1000)
+                }
             }
             
             Timber.i("Network services initialized successfully")

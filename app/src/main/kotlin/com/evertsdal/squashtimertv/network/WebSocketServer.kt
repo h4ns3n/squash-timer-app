@@ -11,7 +11,14 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.time.Duration
@@ -27,13 +34,20 @@ class WebSocketServer @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private var server: ApplicationEngine? = null
-    private val connections = ConcurrentHashMap<String, DefaultWebSocketServerSession>()
+    private val connections = ConcurrentHashMap<String, ConnectionInfo>()
     private var messageHandler: ((WebSocketMessage) -> Unit)? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
     }
+    
+    private data class ConnectionInfo(
+        val session: DefaultWebSocketServerSession,
+        val connectedAt: Long = System.currentTimeMillis(),
+        var lastActivity: Long = System.currentTimeMillis()
+    )
     
     /**
      * Start the WebSocket server on the specified port
@@ -49,8 +63,8 @@ class WebSocketServer @Inject constructor(
             
             server = embeddedServer(Netty, host = "0.0.0.0", port = port) {
                 install(WebSockets) {
-                    pingPeriod = Duration.ofSeconds(15)
-                    timeout = Duration.ofSeconds(15)
+                    pingPeriod = Duration.ofSeconds(30)
+                    timeout = Duration.ofSeconds(60)
                     maxFrameSize = Long.MAX_VALUE
                     masking = false
                 }
@@ -68,6 +82,9 @@ class WebSocketServer @Inject constructor(
             
             Timber.i("✓ WebSocket server started successfully on 0.0.0.0:$port")
             Timber.i("WebSocket endpoint: ws://0.0.0.0:$port/ws")
+            
+            // Start connection cleanup task
+            startConnectionCleanup()
         } catch (e: Exception) {
             Timber.e(e, "Failed to start WebSocket server on port $port")
             server = null
@@ -76,16 +93,63 @@ class WebSocketServer @Inject constructor(
     }
     
     /**
+     * Periodically clean up stale connections
+     */
+    private fun startConnectionCleanup() {
+        scope.launch {
+            while (isActive) {
+                delay(30_000) // Check every 30 seconds
+                cleanupStaleConnections()
+            }
+        }
+    }
+    
+    /**
+     * Remove connections that are no longer active
+     */
+    private suspend fun cleanupStaleConnections() {
+        val now = System.currentTimeMillis()
+        val staleTimeout = 120_000L // 2 minutes
+        
+        val staleConnections = connections.filter { (_, info) ->
+            val isStale = (now - info.lastActivity) > staleTimeout
+            val isClosed = try {
+                info.session.outgoing.isClosedForSend
+            } catch (e: Exception) {
+                true
+            }
+            isStale || isClosed
+        }
+        
+        if (staleConnections.isNotEmpty()) {
+            Timber.d("Cleaning up ${staleConnections.size} stale connections")
+            staleConnections.forEach { (sessionId, info) ->
+                try {
+                    info.session.close(CloseReason(CloseReason.Codes.GOING_AWAY, "Stale connection"))
+                } catch (e: Exception) {
+                    Timber.d("Error closing stale connection: ${e.message}")
+                }
+                connections.remove(sessionId)
+            }
+            Timber.d("Active connections: ${connections.size}")
+        }
+    }
+    
+    /**
      * Handle a new WebSocket connection
      */
     private suspend fun handleWebSocketConnection(session: DefaultWebSocketServerSession) {
-        val sessionId = session.hashCode().toString()
-        connections[sessionId] = session
+        val sessionId = "${session.call.request.local.remoteHost}:${session.call.request.local.remotePort}"
+        val connectionInfo = ConnectionInfo(session)
+        connections[sessionId] = connectionInfo
         
-        Timber.d("Client connected: $sessionId (Total connections: ${connections.size})")
+        Timber.i("Client connected: $sessionId (Total connections: ${connections.size})")
         
         try {
             for (frame in session.incoming) {
+                // Update last activity timestamp
+                connections[sessionId]?.lastActivity = System.currentTimeMillis()
+                
                 when (frame) {
                     is Frame.Text -> {
                         val text = frame.readText()
@@ -96,6 +160,13 @@ class WebSocketServer @Inject constructor(
                     }
                     is Frame.Close -> {
                         Timber.d("Client requested close: $sessionId")
+                        break
+                    }
+                    is Frame.Ping -> {
+                        Timber.d("Received ping from: $sessionId")
+                    }
+                    is Frame.Pong -> {
+                        Timber.d("Received pong from: $sessionId")
                     }
                     else -> {
                         Timber.d("Received frame type: ${frame.frameType}")
@@ -108,7 +179,7 @@ class WebSocketServer @Inject constructor(
             Timber.e(e, "Error in WebSocket connection: $sessionId")
         } finally {
             connections.remove(sessionId)
-            Timber.d("Connection closed: $sessionId (Remaining: ${connections.size})")
+            Timber.i("Connection closed: $sessionId (Remaining: ${connections.size})")
         }
     }
     
@@ -135,12 +206,26 @@ class WebSocketServer @Inject constructor(
         }
         
         Timber.d("Broadcasting to ${connections.size} clients")
-        connections.values.forEach { session ->
+        val failedSessions = mutableListOf<String>()
+        
+        connections.forEach { (sessionId, info) ->
             try {
-                session.send(Frame.Text(message))
+                if (!info.session.outgoing.isClosedForSend) {
+                    info.session.send(Frame.Text(message))
+                    info.lastActivity = System.currentTimeMillis()
+                } else {
+                    failedSessions.add(sessionId)
+                }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to send message to client")
+                Timber.e(e, "Failed to send message to client: $sessionId")
+                failedSessions.add(sessionId)
             }
+        }
+        
+        // Clean up failed sessions
+        failedSessions.forEach { sessionId ->
+            connections.remove(sessionId)
+            Timber.d("Removed failed connection: $sessionId")
         }
     }
     
@@ -148,12 +233,19 @@ class WebSocketServer @Inject constructor(
      * Send a message to a specific client
      */
     suspend fun sendToClient(sessionId: String, message: String) {
-        connections[sessionId]?.let { session ->
+        connections[sessionId]?.let { info ->
             try {
-                session.send(Frame.Text(message))
-                Timber.d("Sent message to client: $sessionId")
+                if (!info.session.outgoing.isClosedForSend) {
+                    info.session.send(Frame.Text(message))
+                    info.lastActivity = System.currentTimeMillis()
+                    Timber.d("Sent message to client: $sessionId")
+                } else {
+                    connections.remove(sessionId)
+                    Timber.w("Client connection closed: $sessionId")
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to send message to client: $sessionId")
+                connections.remove(sessionId)
             }
         } ?: Timber.w("Client not found: $sessionId")
     }
@@ -179,9 +271,19 @@ class WebSocketServer @Inject constructor(
      * Stop the WebSocket server
      */
     fun stop() {
+        scope.cancel()
+        connections.values.forEach { info ->
+            try {
+                scope.launch {
+                    info.session.close(CloseReason(CloseReason.Codes.GOING_AWAY, "Server shutting down"))
+                }
+            } catch (e: Exception) {
+                Timber.d("Error closing connection: ${e.message}")
+            }
+        }
+        connections.clear()
         server?.stop(1000, 2000)
         server = null
-        connections.clear()
         Timber.i("WebSocket server stopped")
     }
 }
