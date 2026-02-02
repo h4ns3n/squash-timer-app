@@ -60,8 +60,16 @@ class SettingsRepositoryImpl @Inject constructor(
             preferences[PreferencesKeys.WARMUP_MINUTES] = settings.warmupMinutes
             preferences[PreferencesKeys.MATCH_MINUTES] = settings.matchMinutes
             preferences[PreferencesKeys.BREAK_MINUTES] = settings.breakMinutes
-            settings.startSoundUri?.let { preferences[PreferencesKeys.START_SOUND_URI] = it }
-            settings.endSoundUri?.let { preferences[PreferencesKeys.END_SOUND_URI] = it }
+            if (settings.startSoundUri != null) {
+                preferences[PreferencesKeys.START_SOUND_URI] = settings.startSoundUri
+            } else {
+                preferences.remove(PreferencesKeys.START_SOUND_URI)
+            }
+            if (settings.endSoundUri != null) {
+                preferences[PreferencesKeys.END_SOUND_URI] = settings.endSoundUri
+            } else {
+                preferences.remove(PreferencesKeys.END_SOUND_URI)
+            }
             preferences[PreferencesKeys.START_SOUND_DURATION] = settings.startSoundDurationSeconds
             preferences[PreferencesKeys.END_SOUND_DURATION] = settings.endSoundDurationSeconds
             preferences[PreferencesKeys.TIMER_FONT_SIZE] = settings.timerFontSize

@@ -93,9 +93,9 @@ for ip in "${TV_IPS[@]}"; do
         # Wait a moment for the app to fully stop
         sleep 1
         
-        # Clear app data to ensure fresh start with new session management
+        # Clear app cache only (preserves settings and uploaded sounds)
         echo "🧹 Clearing app cache..."
-        $ADB -s "$ip:$ADB_PORT" shell pm clear com.evertsdal.squashtimertv 2>/dev/null || true
+        $ADB -s "$ip:$ADB_PORT" shell run-as com.evertsdal.squashtimertv rm -rf /data/data/com.evertsdal.squashtimertv/cache/* 2>/dev/null || true
         
         # Wait a moment before restarting
         sleep 1
