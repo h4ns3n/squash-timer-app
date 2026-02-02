@@ -263,45 +263,100 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     uploadAudio: async (file: File, audioType: 'start' | 'end', onProgress?: (progress: number) => void) => {
-      const deviceInfo = get().getMasterDeviceInfo()
-      if (!deviceInfo) {
-        return { success: false, message: 'No master device connected' }
+      const { connectedDeviceIds, discoveryService } = get()
+      
+      if (connectedDeviceIds.length === 0) {
+        return { success: false, message: 'No devices connected' }
       }
 
-      const result = await audioUploadService.uploadAudioToDevice(
-        deviceInfo.ipAddress,
-        deviceInfo.port,
-        file,
-        audioType,
-        onProgress
-      )
+      // Get all connected device info
+      const connectedDevices = connectedDeviceIds
+        .map(id => discoveryService.getDevice(id))
+        .filter((d): d is NonNullable<typeof d> => d !== undefined)
 
-      if (result.success) {
+      if (connectedDevices.length === 0) {
+        return { success: false, message: 'No devices found' }
+      }
+
+      // Upload to all connected devices
+      const results: { device: string; success: boolean; message: string }[] = []
+      const totalDevices = connectedDevices.length
+      let completedDevices = 0
+
+      for (const device of connectedDevices) {
+        const result = await audioUploadService.uploadAudioToDevice(
+          device.ipAddress,
+          device.port,
+          file,
+          audioType,
+          (progress) => {
+            // Calculate overall progress across all devices
+            const overallProgress = ((completedDevices + progress / 100) / totalDevices) * 100
+            onProgress?.(overallProgress)
+          }
+        )
+        results.push({ device: device.name, success: result.success, message: result.message })
+        completedDevices++
+      }
+
+      const successCount = results.filter(r => r.success).length
+      const failedDevices = results.filter(r => !r.success).map(r => r.device)
+
+      if (successCount === totalDevices) {
         // Request updated settings from master to refresh UI
         get().wsService.requestSettingsFromMaster()
+        return { success: true, message: `Audio uploaded to all ${totalDevices} device(s)` }
+      } else if (successCount > 0) {
+        get().wsService.requestSettingsFromMaster()
+        return { 
+          success: true, 
+          message: `Audio uploaded to ${successCount}/${totalDevices} devices. Failed: ${failedDevices.join(', ')}` 
+        }
+      } else {
+        return { success: false, message: `Failed to upload to all devices: ${results[0]?.message}` }
       }
-
-      return result
     },
 
     deleteAudio: async (audioType: 'start' | 'end') => {
-      const deviceInfo = get().getMasterDeviceInfo()
-      if (!deviceInfo) {
-        return { success: false, message: 'No master device connected' }
+      const { connectedDeviceIds, discoveryService } = get()
+      
+      if (connectedDeviceIds.length === 0) {
+        return { success: false, message: 'No devices connected' }
       }
 
-      const result = await audioUploadService.deleteAudioFromDevice(
-        deviceInfo.ipAddress,
-        deviceInfo.port,
-        audioType
-      )
+      // Get all connected device info
+      const connectedDevices = connectedDeviceIds
+        .map(id => discoveryService.getDevice(id))
+        .filter((d): d is NonNullable<typeof d> => d !== undefined)
 
-      if (result.success) {
-        // Request updated settings from master to refresh UI
+      if (connectedDevices.length === 0) {
+        return { success: false, message: 'No devices found' }
+      }
+
+      // Delete from all connected devices
+      const results: { device: string; success: boolean; message: string }[] = []
+
+      for (const device of connectedDevices) {
+        const result = await audioUploadService.deleteAudioFromDevice(
+          device.ipAddress,
+          device.port,
+          audioType
+        )
+        results.push({ device: device.name, success: result.success, message: result.message })
+      }
+
+      const successCount = results.filter(r => r.success).length
+      const totalDevices = connectedDevices.length
+
+      if (successCount === totalDevices) {
         get().wsService.requestSettingsFromMaster()
+        return { success: true, message: `Audio deleted from all ${totalDevices} device(s)` }
+      } else if (successCount > 0) {
+        get().wsService.requestSettingsFromMaster()
+        return { success: true, message: `Audio deleted from ${successCount}/${totalDevices} devices` }
+      } else {
+        return { success: false, message: `Failed to delete from all devices` }
       }
-
-      return result
     },
 
     getMasterDeviceInfo: () => {
