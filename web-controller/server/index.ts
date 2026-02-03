@@ -13,8 +13,21 @@ const PORT = 3002
 app.use(cors())
 app.use(express.json())
 
-// Path to ADB
-const ADB_PATH = path.join(os.homedir(), 'Library/Android/sdk/platform-tools/adb')
+// Path to ADB - check multiple locations
+function getAdbPath(): string {
+  const possiblePaths = [
+    path.join(os.homedir(), 'Library/Android/sdk/platform-tools/adb'), // Android Studio SDK
+    '/opt/homebrew/bin/adb', // Homebrew on Apple Silicon
+    '/usr/local/bin/adb', // Homebrew on Intel Mac
+    'adb' // System PATH
+  ]
+  
+  // For now, return the first one that might exist
+  // In production, we could check which exists
+  return process.env.ADB_PATH || possiblePaths[0]
+}
+
+const ADB_PATH = getAdbPath()
 
 // ADB port for Android TV
 const ADB_PORT = 5555

@@ -1,4 +1,7 @@
-const API_BASE_URL = 'http://localhost:3002'
+// Use the same host as the web app, but on port 3002
+const API_BASE_URL = typeof window !== 'undefined' 
+  ? `${window.location.protocol}//${window.location.hostname}:3002`
+  : 'http://localhost:3002'
 
 export interface TVStatusResponse {
   online: boolean
