@@ -17,4 +17,4 @@ echo "🔄 Restarting service on MacBook Pro..."
 ssh evtmbp "launchctl unload ~/Library/LaunchAgents/com.squashtimer.web.plist && sleep 2 && launchctl load ~/Library/LaunchAgents/com.squashtimer.web.plist"
 
 echo "✅ Deployment complete!"
-echo "🌐 Web controller running at http://192.168.1.106:3000"
+echo "🌐 Web controller running at http://192.168.0.69:3000"
