@@ -27,7 +27,8 @@ The system provides comprehensive timer management with automatic phase transiti
 - Audio plays automatically at specified intervals:
   - Start sound plays X seconds before warmup ends (where X is the duration of the audio file)
   - End sound plays Y seconds before match ends (where Y is the duration of the audio file)
-- MP3 file support
+- MP3 file support (max 10MB file size, any duration)
+- Audio files uploaded via web controller to all connected TVs simultaneously
 - Audio duration is automatically detected and stored
 - Error handling for audio playback failures
 
@@ -52,6 +53,7 @@ The system provides comprehensive timer management with automatic phase transiti
 - Real-time timer state synchronization across all connected devices
 - Commands sent to all TVs at once (Start, Pause, Resume, Restart)
 - WebSocket-based communication for instant updates
+- Audio files uploaded to all connected TVs simultaneously
 
 #### Master Device Selection
 - Designate any connected TV as the master device
@@ -65,6 +67,12 @@ The system provides comprehensive timer management with automatic phase transiti
 - Syncs display settings (font sizes, colors)
 - Syncs audio settings (sound URIs, durations)
 - Ensures all TVs have identical configuration
+
+#### Session Management
+- Create password-protected sessions to control who can operate timers
+- Session owner identification
+- Controller authentication with session password
+- Session status indicators on all connected devices
 
 #### Network Features
 - Manual device entry with IP address
@@ -208,7 +216,13 @@ The project follows Kotlin coding conventions and uses ktlint for code formattin
 
 ## Version History
 
-### 2.0.0 (Current)
+### 2.1.0 (Current)
+- **Audio Upload to All TVs** - Upload MP3 sound files to all connected TVs simultaneously
+- **Session Management** - Password-protected sessions for controller authentication
+- **Increased Audio Limits** - 10MB max file size, no duration limit
+- **Settings Persistence Fix** - Settings now properly persist across app restarts
+
+### 2.0.0
 - **Web Controller** - React-based web application for remote control
 - **Multi-TV Synchronization** - Control multiple TVs simultaneously
 - **Master Device Selection** - Designate master TV for settings sync

@@ -12,6 +12,8 @@ Web-based controller for the Squash Timer Android TV app.
 - 📺 **Multi-TV Control** - Connect and control multiple TVs simultaneously
 - ⭐ **Master Device Selection** - Designate a master TV for settings sync
 - 🔄 **Settings Sync** - Sync timer settings (warmup, match, break durations) from master to all connected TVs
+- 🔊 **Audio Upload** - Upload MP3 sound files to all connected TVs simultaneously (max 10MB)
+- 🔐 **Session Management** - Password-protected sessions for controller authentication
 
 ## Tech Stack
 
@@ -95,6 +97,30 @@ npm run preview
    - All timer commands (Start, Pause, Restart) are sent to ALL connected TVs simultaneously
    - TVs stay synchronized as long as they're connected through the web controller
 
+### Audio Upload
+
+1. **Upload Sound Files**
+   - Go to Settings and find the "Sound Notifications" section
+   - Click "Choose File" for Start Sound or End Sound
+   - Select an MP3 file (max 10MB, any duration)
+   - The file will be uploaded to ALL connected TVs automatically
+   - Progress bar shows upload status across all devices
+
+2. **Delete Sound Files**
+   - Click the trash icon next to an uploaded sound
+   - Sound will be deleted from ALL connected TVs
+
+### Session Management
+
+1. **Create a Session**
+   - Click "Create Session" to start a password-protected session
+   - Optionally set a password and owner name
+   - Only authenticated controllers can operate timers during an active session
+
+2. **Join a Session**
+   - If a session is active, enter the password to authenticate
+   - Session status is shown on all connected devices
+
 ## Network Requirements
 
 - Both the web controller and Android TV must be on the same local network
@@ -118,19 +144,24 @@ npm run preview
 
 ```
 src/
-├── components/          # React components
-│   ├── DeviceList.tsx  # Device management UI
-│   └── TimerControl.tsx # Timer control UI
-├── services/           # Business logic
-│   ├── WebSocketService.ts      # WebSocket client
-│   └── DeviceDiscoveryService.ts # Device management
-├── store/              # State management
-│   └── useAppStore.ts  # Zustand store
-├── types/              # TypeScript types
+├── components/                    # React components
+│   ├── DeviceList.tsx            # Device management UI
+│   ├── TimerControl.tsx          # Timer control UI
+│   ├── SettingsEditor.tsx        # Settings and audio upload UI
+│   ├── CreateSessionDialog.tsx   # Session creation dialog
+│   ├── SessionAuthDialog.tsx     # Session authentication dialog
+│   └── SessionStatusIndicator.tsx # Session status display
+├── services/                      # Business logic
+│   ├── WebSocketService.ts       # WebSocket client
+│   ├── DeviceDiscoveryService.ts # Device management
+│   └── AudioUploadService.ts     # Audio file upload/validation
+├── store/                         # State management
+│   └── useAppStore.ts            # Zustand store
+├── types/                         # TypeScript types
 │   └── index.ts
-├── App.tsx             # Main app component
-├── main.tsx            # Entry point
-└── index.css           # Global styles
+├── App.tsx                        # Main app component
+├── main.tsx                       # Entry point
+└── index.css                      # Global styles
 ```
 
 ## Deployment
@@ -146,6 +177,7 @@ src/
 - [ ] Emergency time setting
 - [x] ~~Connection status indicators~~ - Connected/disconnected status shown
 - [ ] Dark mode support
-- [ ] Audio settings sync (sound URIs, durations)
-- [ ] Display settings sync (font sizes, colors)
+- [x] ~~Audio settings sync (sound URIs, durations)~~ - Audio upload to all TVs implemented
+- [x] ~~Display settings sync (font sizes, colors)~~ - Included in settings sync
 - [ ] Title/header settings sync
+- [x] ~~Session management~~ - Password-protected sessions implemented
