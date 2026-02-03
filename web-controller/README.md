@@ -14,6 +14,9 @@ Web-based controller for the Squash Timer Android TV app.
 - 🔄 **Settings Sync** - Sync timer settings (warmup, match, break durations) from master to all connected TVs
 - 🔊 **Audio Upload** - Upload MP3 sound files to all connected TVs simultaneously (max 10MB)
 - 🔐 **Session Management** - Password-protected sessions for controller authentication
+- 🏠 **Landing Page** - Easy navigation between Timer Controller and TV Management
+- 🌍 **Environment Switching** - Switch between Home (dev) and Squash Club (production) TV configurations
+- 🚀 **Remote App Launch** - Launch the Squash Timer app on TVs via ADB (single or all at once)
 
 ## Tech Stack
 
@@ -40,10 +43,15 @@ npm install
 ### Development
 
 ```bash
+# Start the frontend (Vite dev server)
 npm run dev
+
+# Start the TV control server (required for remote app launch)
+npm run server
 ```
 
-The app will be available at `http://localhost:3000`
+The frontend will be available at `http://localhost:3000`
+The TV control server runs at `http://localhost:3002`
 
 ### Build
 
@@ -58,6 +66,31 @@ npm run preview
 ```
 
 ## Usage
+
+### Landing Page & Navigation
+
+The app now features a landing page with two main options:
+- **Timer Controller** - Control timers, adjust settings, and manage match sessions
+- **TV Management** - Connect to TVs and launch the timer app remotely
+
+Use the **Environment Selector** (top right) to switch between:
+- **Home (Development)** - Your home TV setup
+- **Squash Club** - Production court TVs
+
+### TV Management
+
+1. **Launch App on Single TV**
+   - Go to TV Management
+   - Click "Open Timer App" on any TV card
+   - The app will be launched via ADB and auto-connect
+
+2. **Launch App on All TVs**
+   - Go to TV Management (with 2+ TVs configured)
+   - Click "Launch All TVs" button
+   - All reachable TVs will have the app launched simultaneously
+   - Results show which TVs succeeded/failed
+
+**Note:** The TV control server must be running (`npm run server`) for remote app launch to work.
 
 ### Single TV Control
 
@@ -148,20 +181,33 @@ src/
 │   ├── DeviceList.tsx            # Device management UI
 │   ├── TimerControl.tsx          # Timer control UI
 │   ├── SettingsEditor.tsx        # Settings and audio upload UI
+│   ├── EnvironmentSelector.tsx   # Environment dropdown (Home/Squash Club)
+│   ├── TVCard.tsx                # Individual TV control card
 │   ├── CreateSessionDialog.tsx   # Session creation dialog
 │   ├── SessionAuthDialog.tsx     # Session authentication dialog
 │   └── SessionStatusIndicator.tsx # Session status display
+├── config/                        # Configuration
+│   └── environments.ts           # TV configurations per environment
+├── pages/                         # Page components
+│   ├── LandingPage.tsx           # Main landing page
+│   ├── ControllerPage.tsx        # Timer controller page
+│   └── TVManagementPage.tsx      # TV management page
 ├── services/                      # Business logic
 │   ├── WebSocketService.ts       # WebSocket client
 │   ├── DeviceDiscoveryService.ts # Device management
-│   └── AudioUploadService.ts     # Audio file upload/validation
+│   ├── AudioUploadService.ts     # Audio file upload/validation
+│   └── TVControlService.ts       # Remote TV control via ADB
 ├── store/                         # State management
-│   └── useAppStore.ts            # Zustand store
+│   ├── useAppStore.ts            # Main Zustand store
+│   └── useEnvironmentStore.ts    # Environment selection store
 ├── types/                         # TypeScript types
 │   └── index.ts
-├── App.tsx                        # Main app component
+├── App.tsx                        # Router configuration
 ├── main.tsx                       # Entry point
 └── index.css                      # Global styles
+
+server/
+└── index.ts                       # Express server for ADB commands
 ```
 
 ## Deployment
@@ -181,3 +227,7 @@ src/
 - [x] ~~Display settings sync (font sizes, colors)~~ - Included in settings sync
 - [ ] Title/header settings sync
 - [x] ~~Session management~~ - Password-protected sessions implemented
+- [x] ~~Landing page with navigation~~ - Landing page with Timer Controller and TV Management
+- [x] ~~Environment switching~~ - Home/Squash Club environment selector
+- [x] ~~Remote app launch~~ - Launch timer app on TVs via ADB
+- [ ] Wake-on-LAN support for sleeping TVs
