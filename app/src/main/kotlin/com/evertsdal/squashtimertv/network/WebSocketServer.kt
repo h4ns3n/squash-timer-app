@@ -62,6 +62,7 @@ class WebSocketServer @Inject constructor(
     private val connections = ConcurrentHashMap<String, ConnectionInfo>()
     private var messageHandler: ((WebSocketMessage) -> Unit)? = null
     private var audioUploadHandler: (suspend (AudioType, String, Int) -> Unit)? = null
+    private var connectionStateHandler: ((Int) -> Unit)? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     
     private val json = Json {
@@ -89,8 +90,8 @@ class WebSocketServer @Inject constructor(
             
             server = embeddedServer(Netty, host = "0.0.0.0", port = port) {
                 install(WebSockets) {
-                    pingPeriod = Duration.ofSeconds(30)
-                    timeout = Duration.ofSeconds(60)
+                    pingPeriod = Duration.ofSeconds(10)
+                    timeout = Duration.ofSeconds(15)
                     maxFrameSize = Long.MAX_VALUE
                     masking = false
                 }
@@ -140,7 +141,7 @@ class WebSocketServer @Inject constructor(
     private fun startConnectionCleanup() {
         scope.launch {
             while (isActive) {
-                delay(30_000) // Check every 30 seconds
+                delay(5_000) // Check every 5 seconds
                 cleanupStaleConnections()
             }
         }
@@ -151,7 +152,7 @@ class WebSocketServer @Inject constructor(
      */
     private suspend fun cleanupStaleConnections() {
         val now = System.currentTimeMillis()
-        val staleTimeout = 120_000L // 2 minutes
+        val staleTimeout = 20_000L // 20 seconds
         
         val staleConnections = connections.filter { (_, info) ->
             val isStale = (now - info.lastActivity) > staleTimeout
@@ -186,6 +187,7 @@ class WebSocketServer @Inject constructor(
         connections[sessionId] = connectionInfo
         
         Timber.i("Client connected: $sessionId (Total connections: ${connections.size})")
+        connectionStateHandler?.invoke(connections.size)
         
         try {
             for (frame in session.incoming) {
@@ -222,6 +224,7 @@ class WebSocketServer @Inject constructor(
         } finally {
             connections.remove(sessionId)
             Timber.i("Connection closed: $sessionId (Remaining: ${connections.size})")
+            connectionStateHandler?.invoke(connections.size)
         }
     }
     
@@ -304,6 +307,13 @@ class WebSocketServer @Inject constructor(
      */
     fun setAudioUploadHandler(handler: suspend (AudioType, String, Int) -> Unit) {
         this.audioUploadHandler = handler
+    }
+    
+    /**
+     * Set the connection state handler for immediate notification of connection changes
+     */
+    fun setConnectionStateHandler(handler: (Int) -> Unit) {
+        this.connectionStateHandler = handler
     }
     
     /**

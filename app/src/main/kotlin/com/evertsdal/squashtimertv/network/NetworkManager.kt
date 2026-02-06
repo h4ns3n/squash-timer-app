@@ -87,16 +87,12 @@ class NetworkManager @Inject constructor(
                 handleAudioUpload(audioType, filePath, durationSeconds)
             }
             
-            // Monitor connection count to update connection state
-            scope.launch {
-                while (true) {
-                    val connectionCount = webSocketServer.getConnectionCount()
-                    val isConnected = connectionCount > 0
-                    if (_isConnectedToWebApp.value != isConnected) {
-                        _isConnectedToWebApp.value = isConnected
-                        Timber.i("Web app connection state changed: $isConnected (connections: $connectionCount)")
-                    }
-                    kotlinx.coroutines.delay(1000)
+            // Set up connection state handler for immediate updates
+            webSocketServer.setConnectionStateHandler { connectionCount ->
+                val isConnected = connectionCount > 0
+                if (_isConnectedToWebApp.value != isConnected) {
+                    _isConnectedToWebApp.value = isConnected
+                    Timber.i("Web app connection state changed: $isConnected (connections: $connectionCount)")
                 }
             }
             

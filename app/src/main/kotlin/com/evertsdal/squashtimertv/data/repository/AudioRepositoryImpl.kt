@@ -19,8 +19,11 @@ class AudioRepositoryImpl @Inject constructor(
 
     private var startSoundPlayer: MediaPlayer? = null
     private var endSoundPlayer: MediaPlayer? = null
+    private var previewPlayer: MediaPlayer? = null
     private var startSoundUri: String? = null
     private var endSoundUri: String? = null
+    @Volatile
+    private var isPreviewCurrentlyPlaying: Boolean = false
 
     override fun setStartSoundUri(uri: String?) {
         startSoundUri = uri
@@ -136,5 +139,63 @@ class AudioRepositoryImpl @Inject constructor(
             // It's a URI (content:// or file://) - parse and use context
             player.setDataSource(context, Uri.parse(path))
         }
+    }
+    
+    override suspend fun previewStartSound() = withContext(Dispatchers.IO) {
+        val uri = startSoundUri ?: return@withContext
+        playPreview(uri)
+    }
+    
+    override suspend fun previewEndSound() = withContext(Dispatchers.IO) {
+        val uri = endSoundUri ?: return@withContext
+        playPreview(uri)
+    }
+    
+    private fun playPreview(uri: String) {
+        try {
+            synchronized(this@AudioRepositoryImpl) {
+                // Stop any existing preview
+                releasePreview()
+                
+                previewPlayer = MediaPlayer().apply {
+                    try {
+                        setDataSourceFromPath(this, uri)
+                        prepare()
+                        setOnCompletionListener {
+                            isPreviewCurrentlyPlaying = false
+                            releasePreview()
+                        }
+                        setOnErrorListener { _, _, _ ->
+                            isPreviewCurrentlyPlaying = false
+                            releasePreview()
+                            true
+                        }
+                        start()
+                        isPreviewCurrentlyPlaying = true
+                    } catch (e: Exception) {
+                        release()
+                        throw e
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to play preview sound: $uri")
+            isPreviewCurrentlyPlaying = false
+            releasePreview()
+        }
+    }
+    
+    override fun stopPreview() {
+        synchronized(this@AudioRepositoryImpl) {
+            isPreviewCurrentlyPlaying = false
+            releasePreview()
+        }
+    }
+    
+    override fun isPreviewPlaying(): Boolean = isPreviewCurrentlyPlaying
+    
+    private fun releasePreview() {
+        previewPlayer?.release()
+        previewPlayer = null
     }
 }

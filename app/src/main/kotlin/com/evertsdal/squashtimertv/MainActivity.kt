@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.lifecycleScope
 import com.evertsdal.squashtimertv.network.NetworkManager
 import com.evertsdal.squashtimertv.ui.settings.SettingsScreen
+import com.evertsdal.squashtimertv.ui.settings.SoundTestScreen
 import com.evertsdal.squashtimertv.ui.theme.SquashTimerTVTheme
 import com.evertsdal.squashtimertv.ui.timer.TimerScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -66,6 +67,17 @@ class MainActivity : ComponentActivity() {
                         
                         composable("settings") {
                             SettingsScreen(
+                                onNavigateBack = {
+                                    navController.popBackStack()
+                                },
+                                onNavigateToSoundTest = {
+                                    navController.navigate("soundTest")
+                                }
+                            )
+                        }
+                        
+                        composable("soundTest") {
+                            SoundTestScreen(
                                 onNavigateBack = {
                                     navController.popBackStack()
                                 }

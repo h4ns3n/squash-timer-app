@@ -7,4 +7,10 @@ interface AudioRepository {
     fun setStartSoundUri(uri: String?)
     fun setEndSoundUri(uri: String?)
     fun release()
+    
+    // Preview methods for sound testing
+    suspend fun previewStartSound()
+    suspend fun previewEndSound()
+    fun stopPreview()
+    fun isPreviewPlaying(): Boolean
 }

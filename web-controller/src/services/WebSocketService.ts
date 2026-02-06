@@ -379,7 +379,7 @@ export class WebSocketService {
     const connection = this.connections.get(deviceId)
     if (connection) {
       connection.ws.onclose = null // Prevent reconnect
-      connection.ws.close()
+      connection.ws.close(1000, 'User disconnected') // Send proper close code
       this.connections.delete(deviceId)
       
       // If master device disconnected, assign new master from remaining connections

@@ -31,7 +31,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToSoundTest: () -> Unit = {}
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val isConnectedToWebApp by viewModel.isConnectedToWebApp.collectAsStateWithLifecycle()
@@ -88,6 +89,26 @@ fun SettingsScreen(
                 onDecrease = { viewModel.decreaseBreakTime() },
                 onIncrease = { viewModel.increaseBreakTime() }
             )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Sound Test button
+            Button(
+                onClick = onNavigateToSoundTest,
+                modifier = Modifier
+                    .width(280.dp)
+                    .height(70.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.onTertiary
+                )
+            ) {
+                Text(
+                    text = "🔊 Sound Test",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         Button(
