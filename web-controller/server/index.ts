@@ -4,6 +4,7 @@ import { exec } from 'child_process'
 import { promisify } from 'util'
 import path from 'path'
 import os from 'os'
+import fs from 'fs'
 
 const execAsync = promisify(exec)
 
@@ -13,19 +14,28 @@ const PORT = 3002
 app.use(cors())
 app.use(express.json())
 
-// Path to ADB - check multiple locations
+// Path to ADB - check multiple locations and return the first one that exists
 function getAdbPath(): string {
+  if (process.env.ADB_PATH) {
+    return process.env.ADB_PATH
+  }
+  
   const possiblePaths = [
-    path.join(os.homedir(), 'platform-tools/adb'), // Downloaded platform-tools in home
     path.join(os.homedir(), 'Library/Android/sdk/platform-tools/adb'), // Android Studio SDK
+    path.join(os.homedir(), 'platform-tools/adb'), // Downloaded platform-tools in home
     '/opt/homebrew/bin/adb', // Homebrew on Apple Silicon
     '/usr/local/bin/adb', // Homebrew on Intel Mac
-    'adb' // System PATH
   ]
   
-  // For now, return the first one that might exist
-  // In production, we could check which exists
-  return process.env.ADB_PATH || possiblePaths[0]
+  // Return the first path that exists
+  for (const adbPath of possiblePaths) {
+    if (fs.existsSync(adbPath)) {
+      return adbPath
+    }
+  }
+  
+  // Fallback to system PATH
+  return 'adb'
 }
 
 const ADB_PATH = getAdbPath()
