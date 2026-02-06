@@ -12,14 +12,19 @@ npm run build
 echo "📤 Transferring dist to MacBook Pro..."
 scp -r dist evtmbp:~/squash-timer-app/web-controller/
 
+# Compile server TypeScript to JavaScript (CommonJS for old Node)
+echo "📦 Compiling server..."
+cd /Users/Paul/workspaces/personal/squash-timer-app/web-controller
+npx tsc server/index.ts --outDir server/dist --esModuleInterop --module commonjs --target ES2020 --skipLibCheck
+mv server/dist/index.js server/dist/index.cjs
+
 # Transfer server files for TV control backend
 echo "📤 Transferring server files..."
 scp -r server evtmbp:~/squash-timer-app/web-controller/
-scp package.json package-lock.json evtmbp:~/squash-timer-app/web-controller/
 
-# Install dependencies on MacBook Pro (needed for server)
-echo "📦 Installing dependencies on MacBook Pro..."
-ssh evtmbp "cd ~/squash-timer-app/web-controller && npm ci"
+# Install only production dependencies on MacBook (express, cors - no build tools)
+echo "📦 Installing server dependencies on MacBook Pro..."
+ssh evtmbp "export PATH=\"/usr/local/bin:\$PATH\" && cd ~/squash-timer-app/web-controller && npm install --omit=dev express cors 2>/dev/null || true"
 
 # Restart services on MacBook Pro
 echo "🔄 Restarting web controller service..."
@@ -29,5 +34,5 @@ echo "🔄 Restarting TV control server..."
 ssh evtmbp "launchctl unload ~/Library/LaunchAgents/com.squashtimer.server.plist 2>/dev/null || true && sleep 1 && launchctl load ~/Library/LaunchAgents/com.squashtimer.server.plist"
 
 echo "✅ Deployment complete!"
-echo "🌐 Web controller running at http://192.168.0.69:3000"
-echo "🖥️  TV control server running at http://192.168.0.69:3002"
+echo "🌐 Web controller running at http://192.168.0.4:3000"
+echo "🖥️  TV control server running at http://192.168.0.4:3002"

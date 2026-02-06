@@ -16,6 +16,7 @@ app.use(express.json())
 // Path to ADB - check multiple locations
 function getAdbPath(): string {
   const possiblePaths = [
+    path.join(os.homedir(), 'platform-tools/adb'), // Downloaded platform-tools in home
     path.join(os.homedir(), 'Library/Android/sdk/platform-tools/adb'), // Android Studio SDK
     '/opt/homebrew/bin/adb', // Homebrew on Apple Silicon
     '/usr/local/bin/adb', // Homebrew on Intel Mac
@@ -128,37 +129,38 @@ app.post('/api/tv/launch-all', async (req, res) => {
   
   console.log(`Launching app on ${ips.length} TVs: ${ips.join(', ')}`)
   
-  // Launch on all TVs in parallel
-  const results = await Promise.allSettled(
-    ips.map(async (ip) => {
-      try {
-        // Connect to the TV
-        const connectResult = await execAsync(`${ADB_PATH} connect ${ip}:${ADB_PORT}`, { timeout: 10000 })
-        
-        if (!connectResult.stdout.includes('connected') && !connectResult.stdout.includes('already connected')) {
-          return { ip, success: false, message: `Failed to connect: ${connectResult.stdout.trim()}` }
-        }
-        
-        // Launch the app
-        const launchResult = await execAsync(
-          `${ADB_PATH} -s ${ip}:${ADB_PORT} shell am start -n ${PACKAGE_NAME}/${ACTIVITY_NAME}`,
-          { timeout: 10000 }
-        )
-        
-        const success = launchResult.stdout.includes('Starting') || launchResult.stdout.includes('Warning: Activity not started')
-        return { ip, success, message: success ? 'Launched' : launchResult.stdout.trim() }
-      } catch (error) {
-        return { ip, success: false, message: error instanceof Error ? error.message : 'Launch failed' }
-      }
-    })
-  )
+  // Start ADB server first to avoid race conditions
+  try {
+    await execAsync(`${ADB_PATH} start-server`, { timeout: 5000 })
+  } catch (e) {
+    // Server may already be running, that's fine
+  }
   
-  const tvResults = results.map((result, index) => {
-    if (result.status === 'fulfilled') {
-      return result.value
+  // Launch on TVs sequentially to avoid ADB daemon conflicts
+  const tvResults: { ip: string; success: boolean; message: string }[] = []
+  
+  for (const ip of ips) {
+    try {
+      // Connect to the TV
+      const connectResult = await execAsync(`${ADB_PATH} connect ${ip}:${ADB_PORT}`, { timeout: 10000 })
+      
+      if (!connectResult.stdout.includes('connected') && !connectResult.stdout.includes('already connected')) {
+        tvResults.push({ ip, success: false, message: `Failed to connect: ${connectResult.stdout.trim()}` })
+        continue
+      }
+      
+      // Launch the app
+      const launchResult = await execAsync(
+        `${ADB_PATH} -s ${ip}:${ADB_PORT} shell am start -n ${PACKAGE_NAME}/${ACTIVITY_NAME}`,
+        { timeout: 10000 }
+      )
+      
+      const success = launchResult.stdout.includes('Starting') || launchResult.stdout.includes('Warning: Activity not started')
+      tvResults.push({ ip, success, message: success ? 'Launched' : launchResult.stdout.trim() })
+    } catch (error) {
+      tvResults.push({ ip, success: false, message: error instanceof Error ? error.message : 'Launch failed' })
     }
-    return { ip: ips[index], success: false, message: 'Unknown error' }
-  })
+  }
   
   const successCount = tvResults.filter(r => r.success).length
   console.log(`Launch complete: ${successCount}/${ips.length} successful`)
